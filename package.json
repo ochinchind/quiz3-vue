@@ -10,11 +10,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/ui": "^2.18.7",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
     "nuxt": "^3.13.2",
-    "vue": "latest",
-    "vue-router": "latest",
+    "vee-validate": "^4.14.0",
     "yup": "^1.4.0"
   }
 }

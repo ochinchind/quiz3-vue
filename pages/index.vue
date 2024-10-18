@@ -2,8 +2,8 @@
 <template>
     <div v-if="isModalOpen" class="drawer" @click.self="closeModal">
     <div class="drawer-content" style="background: #C1EBF1;">
-        <div @click="closeModal" style="background: #FFFFFF; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;">Menu</div>
-        <ul style="background: #FFFFFF; padding: 1rem 0rem; border-radius: 12px;">
+        <div @click="closeModal" style="background: #FFFFFF; color: black; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;">Menu</div>
+        <ul style="background: #FFFFFF; padding: 1rem 0rem; border-radius: 12px; margin-top: 1rem;">
         <li v-for="topic in topics" :key="topic" @click="filterByTopic(topic)" style="background: linear-gradient(90deg, #4CD87C 0%, #42D669 63.42%, #3DD55E 100%); padding: 1rem; color: white; font-size: 2rem; ">
             {{ topic }}
         </li>
@@ -20,7 +20,7 @@
     </div>
     </div>
 
-    <div v-if="showModalLogin" class="modal" @click.self="closeModalLogin">
+    <div v-show="showModalLogin" class="modal" @click.self="closeModalLogin">
       <div class="modal-content">
         <span class="close" @click="closeModalLogin">&times;</span>
         <h2 style="text-align: center;
@@ -28,19 +28,25 @@
     padding: 20px;
     background: #75C2FA;
     margin: 0;">Login</h2>
-        <div class="modal-body" style=" text-align: center;   padding: 20px; cursor:pointer;
+        <div class="modal-body" style=" text-align: center;   padding: 20px;
     margin-top: 3rem;
     margin-bottom: 3rem;">
-          <form class="space-y-4" >
-            <input v-model="state.username" type="text" />
-
-            <input v-model="state.password" type="password" />
-            <button type="submit" style="background: lime;
-    padding: 2rem;
-    border-radius: 2rem;">
-              Authorize
-            </button>
-          </form>
+          <UForm @submit="LoginSubmit" :schema="schemaLogin" :state="stateLogin" >
+            <UFormGroup label="Username" name="username">
+                <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.username" type="text" placeholder="Enter username" />
+            </UFormGroup>
+            <UFormGroup label="Password" name="password">
+                <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
+            </UFormGroup>
+            <div style="margin-top: 2rem;">
+              <button type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
+            </div>
+            <div style="margin-top: 2rem;">
+                <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem;">
+                    AUTHORIZE
+                </UButton>
+            </div>
+          </UForm>
         </div>
       </div>
     </div>
@@ -64,7 +70,7 @@
 
               <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
                 <li @click="toggleModalLogin">Login</li>
-                <li >Register</li>
+                <li ><NuxtLink to="/register">Register </NuxtLink></li>
               </ul>
             </div>
         </div>
@@ -86,7 +92,7 @@
         justify-content: space-between;
         align-items: center; margin-top: 2rem;">
                 <div class="border-blue" style=" font-size: 2.5rem;">
-                    {{selectedTopic}}
+                    {{ selectedTopic }}
                 </div>
                 <div class="filter" @click="toggleDropdown"  ref="dropdown" style="position: relative;">
                   <div class="dropdown-toggle" :class="{ open: isOpen }">
@@ -145,32 +151,22 @@
     </div>
 </template>
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, reactive } from 'vue'
 import { object, string, type InferType } from 'yup'
+import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
 
-const schema = object({
-  username: string().min(3, 'Must be at least 3 characters').max(100, 'Must be less than 100 characters').required('Required'),
+const schemaLogin = object({
+  username: string().required('Username is required').max(255, 'Maximum 255 characters'),
   password: string()
     .min(8, 'Must be at least 8 characters')
-    .required('Required')
+    .required('Password is required')
 })
 
-type Schema = InferType<typeof schema>
+type SchemaLoginType = InferType<typeof schemaLogin>
 
-type FormSubmitEvent<T> = {
-  data: T
-  event: Event
-}
-
-const state = reactive({
+const stateLogin = reactive({
   username: undefined,
   password: undefined
 })
-
-async function onSubmit (event: FormSubmitEvent<Schema>) {
-  
-  console.log(event.data)
-}
 
 </script>
 
@@ -278,6 +274,10 @@ export default {
 
   },
   methods: {
+    LoginSubmit(event: FormSubmitEvent<SchemaLoginType>) {
+        console.log(event.data)
+        alert('submit');
+    },
     filterByRatingOrDate() {
       if (this.selectedFilter == 'pubDate') {
         this.filteredPersons = _.orderBy(this.persons, ['PubDate'], ['desc']);

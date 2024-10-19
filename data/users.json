@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "activated": false,
+    "email": "eg@g.co",
+    "username": "1",
+    "password": "12345678",
+    "confirmation_password": "1"
+  },
+  {
+    "id": 2,
+    "activated": false,
+    "email": "eg@g.co",
+    "username": "rggege",
+    "password": "123456789",
+    "confirmation_password": "123456789"
+  },
+  {
+    "id": 3,
+    "activated": false,
+    "email": "eg@g.co",
+    "username": "rggege",
+    "password": "123456789",
+    "confirmation_password": "123456789"
+  },
+  {
+    "id": 4,
+    "activated": false,
+    "email": "a@g.co",
+    "username": "sdcasf",
+    "password": "123456789",
+    "confirmation_password": "123456789"
+  },
+  {
+    "id": 5,
+    "activated": false,
+    "email": "a@g.co",
+    "username": "sdfwefwe",
+    "password": "123456789",
+    "confirmation_password": "123456789"
+  },
+  {
+    "id": 6,
+    "activated": false,
+    "email": "a@g.co",
+    "username": "ergwergerw",
+    "password": "qwertyuiop",
+    "confirmation_password": "qwertyuiop"
+  }
+]

@@ -1,5 +1,6 @@
 
 <template>
+  <div class="index-page">
     <div v-if="isModalOpen" class="drawer" @click.self="closeModal">
     <div class="drawer-content" style="background: #C1EBF1;">
         <div @click="closeModal" style="background: #FFFFFF; color: black; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;">Menu</div>
@@ -51,7 +52,7 @@
       </div>
     </div>
 
-    <header style="background: #FFFFFFBD; margin-top: 1rem; padding: 1rem;">
+    <header style="background: #FFFFFFBD; padding: 1rem;">
         <div class="header" style="display:flex; justify-content: space-between;">
             <button @click="toggleModal" class="" style="border:none; background: none; cursor: pointer;">
                 <img src="/static/burger.png" style="width: 50px; height:50px;">
@@ -63,14 +64,26 @@
                     New trips on Fall season! Full details on our Instagram accounts.
                 </div>
             </div>
-            <div @click="toggleDropdownAuth"  ref="dropdown" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+            <div v-if="!isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
               <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
                 <img src="/static/img/avatar.png" style="width: 30px; height:30px;">
               </div>
 
               <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
                 <li @click="toggleModalLogin">Login</li>
-                <li ><NuxtLink to="/register">Register </NuxtLink></li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
+              </ul>
+            </div>
+
+            <div v-if="isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" :to="`/profile/${authUserId}`">My profile </NuxtLink></li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/favorites">Favorites </NuxtLink></li>
+                <li @click="logout">Logout</li>
               </ul>
             </div>
         </div>
@@ -149,10 +162,13 @@
             </div>
         </div>
     </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { object, string, type InferType } from 'yup'
 import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
+
+
 
 const schemaLogin = object({
   username: string().required('Username is required').max(255, 'Maximum 255 characters'),
@@ -167,6 +183,7 @@ const stateLogin = reactive({
   username: undefined,
   password: undefined
 })
+
 
 </script>
 
@@ -244,6 +261,8 @@ export default {
       isModalOpen: false,
       showModalLogin: false,
       isOpenAuth: false,
+      isAuth: false,
+      authUserId: '' as null|string,
       isOpen: false,
       selectedFilter: 'rating',
       options: {
@@ -268,15 +287,43 @@ export default {
   mounted() {
     this.filteredPersons = this.persons.filter(person => person.Topic === 'IT');
     document.addEventListener('click', this.handleClickOutside);
+
+
+    var isAuthValue = localStorage.getItem('isAuth');
+    this.authUserId = isAuthValue;
+
+    this.isAuth = isAuthValue !== null && !isNaN(Number(isAuthValue));
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);
 
   },
   methods: {
-    LoginSubmit(event: FormSubmitEvent<SchemaLoginType>) {
-        console.log(event.data)
-        alert('submit');
+    async LoginSubmit(event: FormSubmitEvent<SchemaLoginType>) {
+        event.preventDefault();
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(event.data),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Logged successful!');
+                localStorage.setItem('isAuth', result.userId);
+                this.isAuth = true;
+                this.authUserId = result.userId;
+            } else {
+                alert('Failed to login.');
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            alert('An error occurred while submitting the form.');
+        }
     },
     filterByRatingOrDate() {
       if (this.selectedFilter == 'pubDate') {
@@ -331,6 +378,11 @@ export default {
       if (dropdown && !dropdown.contains(event.target)) {
         this.isOpen = false;
       }
+      const dropdownAuth = this.$refs.dropdownAuth;
+      if (dropdownAuth && !dropdownAuth.contains(event.target)) {
+        this.isOpenAuth = false;
+      }
+      
     },
     nextPage() {
       if (this.currentPage < this.totalPages) {
@@ -377,15 +429,20 @@ export default {
             this.filterByRatingOrDate();
       }
     },
+    logout() {
+      localStorage.removeItem('isAuth');
+      this.isAuth = false;
+    }
   }
 }
 </script>
 
 <style>
-body {
+.index-page {
     font-family: Arial, sans-serif;
     background: url('/static/img/background.png') no-repeat center center fixed; 
     background-size: cover;
+    min-height: 100vh;
     margin: 0;
     padding: 0;
 }

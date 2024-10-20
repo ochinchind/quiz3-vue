@@ -52,7 +52,7 @@
 
           <div style="display: flex; margin-top: 2rem;">
             <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE SECRET PHRASE</div>
-            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" name="secret_phrase" type="password" placeholder="******" style="background: #44B3D6; color: white;
+            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="secretPhraseInput" name="secret_phrase" type="password" placeholder="******" style="background: #44B3D6; color: white;
 "></div>
           </div>
           <div style="display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; margin-top: 2rem;">
@@ -149,6 +149,7 @@
 <script setup lang="ts">
 import { object, string, ref, type InferType } from 'yup'
 import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
+import { useRouter } from 'vue-router'
 
 const schemaLogin = object({
   username: string().required('Username is required').max(255, 'Maximum 255 characters'),
@@ -156,6 +157,8 @@ const schemaLogin = object({
     .min(8, 'Must be at least 8 characters')
     .required('Password is required')
 })
+
+let router = useRouter()
 
 type SchemaLoginType = InferType<typeof schemaLogin>
 
@@ -181,6 +184,54 @@ const stateRegister = reactive({
     password: undefined,
     confirmation_password: undefined,
 })
+
+async function logCode() {
+    try {
+        const response = await fetch('/api/sendusercode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({username: stateRegister.username}),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Send successfully!');
+        } else {
+            alert('Failed to send.');
+        }
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('An error occurred while submitting the form.');
+    }
+}
+
+async function createUser(event: any) {
+        const secretPhraseInput = document.getElementById('secretPhraseInput') as HTMLInputElement;
+        const secretPhrase = secretPhraseInput.value;
+
+        try {
+            const response = await fetch('/api/validateemail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({username: stateRegister.username, code: secretPhrase}),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('User activated!');
+                router.push('/');
+            } else {
+              alert('Incorrect secret phrase! Please try again.');
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            alert('An error occurred while submitting the form.');
+        }
+    }
 
 </script>
 
@@ -314,6 +365,7 @@ export default {
                 alert('Registration successful!');
                 this.showModalValidate = true;
                 localStorage.setItem('isAuth', result.userId);
+                localStorage.setItem('jwtToken', result.token);
             } else {
                 alert('Failed to save data.');
             }
@@ -458,20 +510,6 @@ export default {
 
             this.filterByRatingOrDate();
       }
-    },
-    logCode() {
-        console.log('123');
-        alert('send successfully!');
-    },
-    createUser(event: any) {
-        const secretPhraseInput = this.$refs.secretPhraseInput as HTMLInputElement;
-        const secretPhrase = secretPhraseInput.value;
-
-        if (secretPhrase === '123') {
-            this.$router.push('/');
-        } else {
-            alert('Incorrect secret phrase! Please try again.');
-        }
     },
     logout() {
       localStorage.removeItem('isAuth');

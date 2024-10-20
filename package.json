@@ -11,10 +11,19 @@
   },
   "dependencies": {
     "@nuxt/ui": "^2.18.7",
+    "@nuxthub/core": "^0.7.34",
+    "bcrypt": "^5.1.1",
     "date-fns": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "nuxt": "^3.13.2",
+    "postgres": "^3.4.4",
     "vee-validate": "^4.14.0",
     "yup": "^1.4.0"
+  },
+  "devDependencies": {
+    "nodemailer": "^6.9.15",
+    "nuxt-nodemailer": "^1.1.2",
+    "wrangler": "^3.81.0"
   }
 }

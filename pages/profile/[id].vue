@@ -1,9 +1,10 @@
 
 <template>
 <div class="register-page">
-    <div v-show="showModalLogin" class="modal" @click.self="closeModalLogin">
-        <div class="modal-content">
-        <span class="close" @click="closeModalLogin">&times;</span>
+    
+    <div v-show="showLoginModal" class="modal" @click.self="closeLoginModal">
+      <div class="modal-content">
+        <span class="close" @click="closeLoginModal">&times;</span>
         <h2 style="text-align: center;
     color: white;
     padding: 20px;
@@ -12,7 +13,7 @@
         <div class="modal-body" style=" text-align: center;   padding: 20px;
     margin-top: 3rem;
     margin-bottom: 3rem;">
-            <UForm @submit="LoginSubmit" :schema="schemaLogin" :state="stateLogin" >
+          <UForm @submit="LoginSubmit" :schema="schemaLogin" :state="stateLogin" >
             <UFormGroup label="Username" name="username">
                 <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.username" type="text" placeholder="Enter username" />
             </UFormGroup>
@@ -20,18 +21,60 @@
                 <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
             </UFormGroup>
             <div style="margin-top: 2rem;">
-                <button type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
+              <button @click="toggleForgetPasswordModal" type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
             </div>
             <div style="margin-top: 2rem;">
                 <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem;">
                     AUTHORIZE
                 </UButton>
             </div>
-            </UForm>
+          </UForm>
         </div>
-        </div>
+      </div>
     </div>
 
+    <div v-show="showForgetPasswordModal"  class="modal" style="z-index: 9999999;" @click.self="closeForgetPasswordModal">
+      <div style="background: linear-gradient(180deg, #62F0E8 0%, #50BEB7 60%, #2F8781 100%);max-width: 1000px; " class="modal-content">
+        <span class="close" @click="closeForgetPasswordModal">&times;</span>
+        <div class="modal-body" style="  align-items: center; text-align: center; justify-content: center;  padding: 20px;
+    margin-top: 3rem;
+    margin-bottom: 3rem;">
+            <div style=" display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; ">
+                <div style="background: white; padding: 2rem; width: 400px;">
+                To get access to your account do next steps
+              </div>
+            </div>
+
+            <div style="display: flex; margin-top: 2rem;">
+              <div style="width: 50%; color: white; font-size: 1.5rem;">Write your email</div>
+              <div style="width: 50%; font-size: 1.5rem;">
+                <input type="text" name="email" id="emailForgetInput">
+              </div>
+            </div>
+
+          <div style="display: flex; margin-top: 2rem;">
+            <div style="width: 50%; color: white; font-size: 1.5rem;">Send code to email</div>
+            <div style="width: 50%; font-size: 1.5rem;"><button @click="sendForgetPasswordToEmail" :disabled="isLoadingForgetPassword" style="background: #D6E343; color: black; padding: 1rem;
+">{{ isLoadingForgetPassword ? 'Loading...' : 'Send' }}</button></div>
+          </div>
+
+          <div style="display: flex; margin-top: 2rem;">
+            <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE SECRET PHRASE</div>
+            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="secretPhraseForgetPasswordInput" name="secret_phrase" type="password" placeholder="******" style="background: #44B3D6; color: white;
+"></div>
+</div>
+          <div style="display: flex; margin-top: 2rem;">
+            <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE NEW PASSWORD</div>
+            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="newPasswordInputForget" name="password" type="password" placeholder="******" style="background: #44B3D6; color: white;
+"></div>
+          </div>
+          <div style="display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; margin-top: 2rem;">
+                <button @click="changePasswordForget" :disabled="isLoadingForgetChangePassword" style="background: #44B3D6; padding: 1rem; color:white;
+">{{ isLoadingForgetChangePassword ? 'Loading...' : 'Change password' }}</button>
+            </div>
+        </div>
+      </div>
+    </div>
     <header style="background: #FFFFFFBD;  padding: 1rem;">
         <div class="header" style="display:flex; justify-content: space-between;">
             <NuxtLink to="/" class="" style="border:none; background: none; cursor: pointer;">
@@ -50,7 +93,7 @@
                 </div>
 
                 <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
-                <li @click="toggleModalLogin">Login</li>
+                <li @click="toggleLoginModal">Login</li>
                 <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
                 </ul>
             </div>
@@ -72,34 +115,57 @@
 
 
     <div style="padding: 3rem;">
-        <div style="  display: flex;
-    flex-direction: column;">
-            <div style="display: flex; text-align: end; justify-content: end; font-size: 3rem; color: white;">
-                <div v-if="userId == authUserId"> My Profile</div>
-                <div v-else>Profile</div>
-            </div>
-            <div style="display: flex; ">
-                <div style="width: 33%">
-                    <img width="100px" height="200px" src="/static/img/avatar.png">
+        <UForm @submit="UserEditSubmit" :schema="schemaUser" :state="stateUser" >
+            <div style="  display: flex;
+        flex-direction: column;">
+                <div style="display: flex; text-align: end; justify-content: end; font-size: 3rem; color: white;">
+                    <div v-if="userId == authUserId"> My Profile</div>
+                    <div v-else>Profile</div>
                 </div>
-                <div style="width: 33%">
-                    <div>{{ userData.username }}</div>
-                    <div>Age: 29</div>
-                    <div>Centucky, USA</div>
-                    <div>Activity: was 5 minutes ago</div>
-                    <div>Current rating: </div>
-                </div>
-                <div style="width: 33%">
+                <div style="display: flex; ">
+                    <div style="width: 33%">
+                        <img width="100px" height="200px" src="/static/img/avatar.png">
+                    </div>
+                    <div v-show="userId != authUserId" style="width: 33%">
+                        <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
+                        <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: {{ stateUser.age }}</div>
+                        <div style="font-size: 2rem; margin-top: 2rem;">{{ stateUser.location }}</div>
+                        <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: was 5 minutes ago</div>
+                        <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: </div>
+                    </div>
+                    <div v-show="userId == authUserId" style="width: 33%">
+                        <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
+                        <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: <UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model="stateUser.age" type="number" placeholder="Enter age" /></div>
+                        <div style="font-size: 2rem; margin-top: 2rem;"><UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model="stateUser.location" type="text" placeholder="Enter location" /></div>
+                        <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: for now</div>
+                        <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: </div>
+                    </div>
+                    <div style="width: 33%">
+                        <div v-if="userId == authUserId">
+                            <div style=" font-size: 2rem;margin-top: 2rem;">Statistic</div>
+                            <div style=" font-size: 2rem;margin-top: 2rem;"> 
+                                <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem;">
+                                    SAVE
+                                </UButton>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <div style=" font-size: 2rem;margin-top: 2rem;"> 
 
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </UForm>
     </div>
 </div>
 </template>
 <script setup lang="ts">
-import { object, string, ref, type InferType } from 'yup'
+import { object, string, number, ref, type InferType } from 'yup'
 import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
+import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
+import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget } from '~/scripts/auth'
 
 const schemaLogin = object({
     username: string().required('Username is required').max(255, 'Maximum 255 characters'),
@@ -115,14 +181,57 @@ const stateLogin = reactive({
     password: undefined
 })
 
-const schemaRegister = object({
-    email: string().required('Email is required').email('Incorrect email format'),
+
+const schemaUser = object({
     username: string().required('Username is required').max(255, 'Maximum 255 characters'),
-    password: string()
-    .min(8, 'Must be at least 8 characters')
-    .required('Password is required'),
-    confirmation_password: string().required('Please retype your password.').oneOf([ref('password')], 'Your passwords do not match.')
+    age: number().required().positive().integer(),
+    location: string().nullable(),
 })
+
+type SchemaUserType = InferType<typeof schemaUser>
+
+var stateUser = reactive({
+    username: undefined,
+    age: undefined,
+    location: undefined
+})
+
+
+const route = useRoute();
+const userId = route.params.id;
+var userData = {};
+
+async function getUser() {
+    try {
+        const { data, error } = await useFetch(`/api/users/${userId}`);
+
+        if (error.value) {
+            console.error('Error fetching user data:', error.value);
+            return;
+        }
+
+        if (data.value?.success) {
+            userData = reactive({
+                username: data.value.user.username,
+                age: data.value.user.age,
+                location: data.value.user.location
+            });
+
+            stateUser = reactive({
+                username: data.value.user.username,
+                age: data.value.user.age,
+                location: data.value.user.location
+            });
+            console.log(data.value.user);
+        } else {
+            console.error(data.value.message);
+        }
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+    }
+}
+
+getUser();
 
 </script>
 
@@ -135,6 +244,10 @@ interface User {
   activated: boolean;
   email: string;
   username: string;
+  age: string;
+  location: string;
+  last_activity: string;
+  rating: string;
 }
 
 interface Person {
@@ -205,19 +318,9 @@ export default {
         itemsPerPage: 4,
         sortByRating: true,
         isModalOpen: false,
-        showModalLogin: false,
         showModalValidate: false,
         isOpenAuth: false,
-        userData: {
-            id: 1,
-            activated: false,
-            email: "eg@g.co",
-            username: "a",
-        } as unknown as User[],
         isOpen: false,
-        isAuth: false,
-        userId: '' as null|string|string[],
-        authUserId: '' as null|string,
         selectedFilter: 'rating',
         options: {
         rating: 'Rating',
@@ -244,26 +347,10 @@ export default {
 
 
     var isAuthValue = localStorage.getItem('isAuth');
-    this.authUserId = isAuthValue;
-
-    this.isAuth = isAuthValue !== null && !isNaN(Number(isAuthValue));
-    const route = useRoute();
-    this.userId = route.params.id;
-
-    async () => {
-        try {
-            const response = await fetch(`/api/users/${this.userId}`);
-            const result = await response.json();
-
-            if (result.success) {
-            this.userData = result.user;
-            } else {
-            console.error(result.message);
-            }
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-        }
-        }
+    var authJwtTokenValue = localStorage.getItem('jwtToken');
+    authUserIdChange(isAuthValue ?? '');
+    changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
+    authJwtTokenChange(authJwtTokenValue ?? '');
 
     },
     beforeUnmount() {
@@ -287,10 +374,39 @@ export default {
             if (result.success) {
                 alert('Logged successful!');
                 localStorage.setItem('isAuth', result.userId);
-                this.isAuth = true;
-                this.authUserId = result.userId;
+                localStorage.setItem('jwtToken', result.token);
+                trueIsAuth();
+                authUserIdChange(result.userId);
+                authJwtTokenChange(result.token);
+                closeLoginModal();
             } else {
                 alert('Failed to login.');
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            alert('An error occurred while submitting the form.');
+        }
+    },
+    async UserEditSubmit(event: FormSubmitEvent<SchemaUserType>) {
+        event.preventDefault();
+
+        try {
+            console.log("Form submitted:", stateUser);
+            
+            const response = await fetch('/api/useredit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authJwtToken,
+                },
+                body: JSON.stringify(event.data),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Edited successfuly!');
+            } else {
+                alert('Failed to edit.');
             }
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -364,16 +480,9 @@ export default {
     toggleModal() {
         this.isModalOpen = !this.isModalOpen;
     },
-    toggleModalLogin(event: any) {
-        event.preventDefault();
-        this.showModalLogin = !this.showModalLogin;
-    },
     toggleModalValidate(event: any) {
         event.preventDefault();
         this.showModalValidate = !this.showModalValidate;
-    },
-    closeModalLogin() {
-        this.showModalLogin = false;
     },
     closeModalValidate() {
         this.showModalValidate = false;
@@ -421,10 +530,6 @@ export default {
         } else {
             alert('Incorrect secret phrase! Please try again.');
         }
-    },
-    logout() {
-        localStorage.removeItem('isAuth');
-        this.isAuth = false;
     }
     }
 }

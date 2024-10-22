@@ -21,9 +21,9 @@
     </div>
     </div>
 
-    <div v-show="showModalLogin" class="modal" @click.self="closeModalLogin">
+    <div v-show="showLoginModal" class="modal" @click.self="closeLoginModal">
       <div class="modal-content">
-        <span class="close" @click="closeModalLogin">&times;</span>
+        <span class="close" @click="closeLoginModal">&times;</span>
         <h2 style="text-align: center;
     color: white;
     padding: 20px;
@@ -40,7 +40,7 @@
                 <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
             </UFormGroup>
             <div style="margin-top: 2rem;">
-              <button type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
+              <button @click="toggleForgetPasswordModal" type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
             </div>
             <div style="margin-top: 2rem;">
                 <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem;">
@@ -48,6 +48,49 @@
                 </UButton>
             </div>
           </UForm>
+        </div>
+      </div>
+    </div>
+
+    <div v-show="showForgetPasswordModal"  class="modal" style="z-index: 9999999;" @click.self="closeForgetPasswordModal">
+      <div style="background: linear-gradient(180deg, #62F0E8 0%, #50BEB7 60%, #2F8781 100%);max-width: 1000px; " class="modal-content">
+        <span class="close" @click="closeForgetPasswordModal">&times;</span>
+        <div class="modal-body" style="  align-items: center; text-align: center; justify-content: center;  padding: 20px;
+    margin-top: 3rem;
+    margin-bottom: 3rem;">
+            <div style=" display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; ">
+                <div style="background: white; padding: 2rem; width: 400px;">
+                To get access to your account do next steps
+              </div>
+            </div>
+
+            <div style="display: flex; margin-top: 2rem;">
+              <div style="width: 50%; color: white; font-size: 1.5rem;">Write your email</div>
+              <div style="width: 50%; font-size: 1.5rem;">
+                <input type="text" name="email" id="emailForgetInput">
+              </div>
+            </div>
+
+          <div style="display: flex; margin-top: 2rem;">
+            <div style="width: 50%; color: white; font-size: 1.5rem;">Send code to email</div>
+            <div style="width: 50%; font-size: 1.5rem;"><button @click="sendForgetPasswordToEmail" :disabled="isLoadingForgetPassword" style="background: #D6E343; color: black; padding: 1rem;
+">{{ isLoadingForgetPassword ? 'Loading...' : 'Send' }}</button></div>
+          </div>
+
+          <div style="display: flex; margin-top: 2rem;">
+            <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE SECRET PHRASE</div>
+            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="secretPhraseForgetPasswordInput" name="secret_phrase" type="password" placeholder="******" style="background: #44B3D6; color: white;
+"></div>
+</div>
+          <div style="display: flex; margin-top: 2rem;">
+            <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE NEW PASSWORD</div>
+            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="newPasswordInputForget" name="password" type="password" placeholder="******" style="background: #44B3D6; color: white;
+"></div>
+          </div>
+          <div style="display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; margin-top: 2rem;">
+                <button @click="changePasswordForget" :disabled="isLoadingForgetChangePassword" style="background: #44B3D6; padding: 1rem; color:white;
+">{{ isLoadingForgetChangePassword ? 'Loading...' : 'Change password' }}</button>
+            </div>
         </div>
       </div>
     </div>
@@ -70,7 +113,7 @@
               </div>
 
               <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
-                <li @click="toggleModalLogin">Login</li>
+                <li @click="toggleLoginModal">Login</li>
                 <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
               </ul>
             </div>
@@ -190,6 +233,8 @@ const stateLogin = reactive({
 <script lang="ts">
 import _ from 'lodash';
 import { format, formatDistanceToNowStrict, isToday } from 'date-fns';
+import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
+import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget } from '~/scripts/auth'
 
 interface Person {
   id: number;
@@ -259,10 +304,7 @@ export default {
       itemsPerPage: 4,
       sortByRating: true,
       isModalOpen: false,
-      showModalLogin: false,
       isOpenAuth: false,
-      isAuth: false,
-      authUserId: '' as null|string,
       isOpen: false,
       selectedFilter: 'rating',
       options: {
@@ -290,9 +332,10 @@ export default {
 
 
     var isAuthValue = localStorage.getItem('isAuth');
-    this.authUserId = isAuthValue;
-
-    this.isAuth = isAuthValue !== null && !isNaN(Number(isAuthValue));
+    var authJwtTokenValue = localStorage.getItem('jwtToken');
+    authUserIdChange(isAuthValue ?? '');
+    changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
+    authJwtTokenChange(authJwtTokenValue ?? '');
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);
@@ -315,8 +358,11 @@ export default {
             if (result.success) {
                 alert('Logged successful!');
                 localStorage.setItem('isAuth', result.userId);
-                this.isAuth = true;
-                this.authUserId = result.userId;
+                localStorage.setItem('jwtToken', result.token);
+                trueIsAuth();
+                authUserIdChange(result.userId);
+                authJwtTokenChange(result.token);
+                closeLoginModal();
             } else {
                 alert('Failed to login.');
             }
@@ -392,13 +438,6 @@ export default {
     toggleModal() {
       this.isModalOpen = !this.isModalOpen;
     },
-    toggleModalLogin(event: any) {
-      event.preventDefault();
-      this.showModalLogin = !this.showModalLogin;
-    },
-    closeModalLogin() {
-      this.showModalLogin = false;
-    },
     closeModal() {
       this.isModalOpen = false;
     },
@@ -428,10 +467,6 @@ export default {
 
             this.filterByRatingOrDate();
       }
-    },
-    logout() {
-      localStorage.removeItem('isAuth');
-      this.isAuth = false;
     }
   }
 }

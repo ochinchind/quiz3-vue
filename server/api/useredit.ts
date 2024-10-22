@@ -15,17 +15,7 @@ export default defineEventHandler(async (event) => {
 
         const token = authHeader.split(' ')[1];
 
-        const secretKey = process.env.JWT_SECRET;
-        let decodedToken;
-        try {
-          decodedToken = jwt.verify(token, secretKey);
-        } catch (err) {
-          return { success: false, message: 'Invalid token' };
-        }
-
-        const tokenUserId = decodedToken.userId;
-
-        const userResult = await sqlSelect`SELECT * FROM users WHERE id = ${tokenUserId}`;
+        const userResult = await sqlSelect`SELECT * FROM users WHERE token = ${token}`;
     
         event.waitUntil(sqlSelect.end())
         if (userResult.length == 0) {
@@ -36,7 +26,7 @@ export default defineEventHandler(async (event) => {
         await sqlInsert`
           UPDATE users 
           SET age = ${age}, location = ${location} 
-          WHERE id = ${tokenUserId}
+          WHERE id = ${userResult[0].id}
         `;
     
         event.waitUntil(sqlInsert.end());

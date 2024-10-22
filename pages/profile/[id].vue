@@ -131,14 +131,20 @@
                         <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: {{ stateUser.age }}</div>
                         <div style="font-size: 2rem; margin-top: 2rem;">{{ stateUser.location }}</div>
                         <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: was 5 minutes ago</div>
-                        <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: </div>
+                        <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: <span class="stars" :style="getStarStyle(stateUser.rating)">
+                            ★★★★★
+                        </span></div>
                     </div>
                     <div v-show="userId == authUserId" style="width: 33%">
                         <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
-                        <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: <UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model="stateUser.age" type="number" placeholder="Enter age" /></div>
+                        <UFormGroup  style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;" name="age">
+                            <span>Age:</span> <UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model.number="stateUser.age"  type="number" placeholder="Enter age" />
+                        </UFormGroup>
                         <div style="font-size: 2rem; margin-top: 2rem;"><UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model="stateUser.location" type="text" placeholder="Enter location" /></div>
                         <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: for now</div>
-                        <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: </div>
+                        <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: <span class="stars" :style="getStarStyle(stateUser.rating)">
+                            ★★★★★
+                        </span></div>
                     </div>
                     <div style="width: 33%">
                         <div v-if="userId == authUserId">
@@ -151,7 +157,9 @@
                         </div>
                         <div v-else>
                             <div style=" font-size: 2rem;margin-top: 2rem;"> 
-
+                                <button @click="followUser()" type="button" style="background: lime; padding: 2rem; border-radius: 2rem;">
+                                    {{ isFollowing ? 'Unfollow' : 'Follow' }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -159,6 +167,41 @@
             </div>
         </UForm>
     </div>
+
+    <section class="posts-section">
+        <h2>Latest posts</h2>
+        <div class="reviews">
+            <div  v-for="(post, index) in paginatedPosts" :key="index"  class="review-card">
+                    <div class="review-details">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="background: #FFFFF526; padding: 0.5rem; text-align: start;">
+                                <p><strong>{{ post.username }}</strong> </p>
+                                <p>{{ formatDate(post.created_at) }}</p>
+                            </div>
+                            <div>
+                                <p><strong>Rating</strong> </p>
+                                <p class="rating">
+                                    <span class="stars" :style="getStarStyle(post.rating)">
+                                    ★★★★★
+                                    </span>
+                                </p>
+                            </div>
+                            <img :src="post.avatar" :alt="post.username" width="50" height="50">
+                        </div>
+                        <p style="word-break: break-all;">{{ post.post_text }}</p>
+                        <div v-if="userId == authUserId" style="display: flex; justify-content: end;">
+                        <button class="like-button" style="background:red;" @click="deletePost(index)">Delete</button>
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+        <div class="pagination-controls">
+        <button v-if="totalPages > 1"  @click="prevPage" :disabled="currentPage === 1">◀</button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <button v-if="totalPages > 1"  @click="nextPage" :disabled="currentPage === totalPages">▶</button>
+        </div>
+    </section>
 </div>
 </template>
 <script setup lang="ts">
@@ -166,6 +209,8 @@ import { object, string, number, ref, type InferType } from 'yup'
 import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
 import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
 import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget } from '~/scripts/auth'
+import { ref as refVue, computed } from 'vue'
+
 
 const schemaLogin = object({
     username: string().required('Username is required').max(255, 'Maximum 255 characters'),
@@ -190,12 +235,43 @@ const schemaUser = object({
 
 type SchemaUserType = InferType<typeof schemaUser>
 
-var stateUser = reactive({
+const stateUser = reactive({
     username: undefined,
     age: undefined,
-    location: undefined
+    location: undefined,
+    rating: undefined
 })
 
+
+
+const UserEditSubmit = async (event: { data: SchemaUserType }) => {
+  try {
+    const token = authJwtToken ?? localStorage.getItem('jwtToken');
+    if (!token) {
+        alert('Authentication token is missing.');
+        return;
+    }
+
+    const response = await fetch('/api/useredit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authJwtToken.value,
+      },
+      body: JSON.stringify(stateUser),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      alert('Edited successfully!');
+    } else {
+      alert('Failed to edit.');
+    }
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    alert('An error occurred while submitting the form.');
+  }
+};
 
 const route = useRoute();
 const userId = route.params.id;
@@ -217,11 +293,11 @@ async function getUser() {
                 location: data.value.user.location
             });
 
-            stateUser = reactive({
-                username: data.value.user.username,
-                age: data.value.user.age,
-                location: data.value.user.location
-            });
+            stateUser.username = data.value.user.username;
+            stateUser.age = data.value.user.age;
+            stateUser.location = data.value.user.location;
+            stateUser.rating = data.value.user.rating;
+
             console.log(data.value.user);
         } else {
             console.error(data.value.message);
@@ -233,6 +309,159 @@ async function getUser() {
 
 getUser();
 
+const currentPage = refVue(1)
+const itemsPerPage = refVue(2)
+
+interface Post {
+    post_text: string;
+    rating: number;
+    user_id: number;
+    created_at: string;
+    username: string;
+    avatar: string;
+}
+
+const posts = refVue<Post[]>([]);
+
+async function getPosts() {
+    try {
+        const { data, error } = await useFetch('/api/getposts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_id: userId }), 
+        });
+
+        if (error.value) {
+            console.error('Error fetching posts data:', error.value);
+            return;
+        }
+
+        if (data.value?.success) {
+            posts.value = data.value.posts;
+        } else {
+            console.error(data.value.message);
+        }
+    } catch (error) {
+        console.error('Error fetching posts data:', error);
+    }
+}
+
+
+const paginatedPosts = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return posts.value.slice(start, end)
+})
+
+const totalPages = computed(() => Math.ceil(posts.value.length / itemsPerPage.value))
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const deletePost = (postId: any) => {
+  posts.value = posts.value.filter(post => post.id !== postId)
+}
+
+const formatDate = (dateString: any) => {
+  const date = new Date(dateString)
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+}
+
+getPosts();
+
+async function followUser() {
+    if (authUserId == userId) {
+        alert('cant follow myself!');
+    }
+
+    try {
+        const token = authJwtToken ?? localStorage.getItem('jwtToken');
+        if (!token) {
+            alert('Authentication token is missing.');
+            return;
+        }
+
+        const response = await fetch('/api/followuser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authJwtToken.value,
+            },
+            body: JSON.stringify({user_id: userId}),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert(result.message);
+            isFollowing.value = !isFollowing.value; 
+        } else {
+            alert('Failed to following.');
+        }
+    } catch (error) {
+        console.error('Error following :', error);
+        alert('An error occurred while following ');
+    }
+}
+
+const isFollowing = refVue(false);
+
+
+async function checkFollowStatus() {
+    try {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const token = authJwtToken ?? localStorage.getItem('jwtToken');
+        if (!token) {
+            alert('not auth!');
+            return;
+        }
+
+        const response = await fetch('/api/checkfollow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token.value}`,
+            },
+            body: JSON.stringify({ user_id: userId }),
+        });
+        const data = await response.json();
+        console.log(data);
+
+        if (data?.success) {
+            isFollowing.value = data.isFollowing;
+        } else {
+            isFollowing.value = false;
+        }
+    } catch (error) {
+        console.error('Error checking follow status:', error);
+        isFollowing.value = false;
+    }
+}
+onMounted(() => {
+    const isAuthValue = localStorage.getItem('isAuth');
+    const authJwtTokenValue = localStorage.getItem('jwtToken');
+
+    authUserIdChange(isAuthValue ?? '');
+    changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
+    authJwtTokenChange(authJwtTokenValue ?? '');
+
+    if (authJwtToken.value) {
+        checkFollowStatus();
+    } else {
+        console.warn('No auth token found in localStorage.');
+    }
+});
 </script>
 
 <script lang="ts">
@@ -329,9 +558,6 @@ export default {
     };
     },
     computed: {
-    totalPages() {
-        return Math.ceil(this.filteredPersons.length / this.itemsPerPage);
-    },
     paginatedPersons() {
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
         const endIndex = startIndex + this.itemsPerPage;
@@ -387,32 +613,6 @@ export default {
             alert('An error occurred while submitting the form.');
         }
     },
-    async UserEditSubmit(event: FormSubmitEvent<SchemaUserType>) {
-        event.preventDefault();
-
-        try {
-            console.log("Form submitted:", stateUser);
-            
-            const response = await fetch('/api/useredit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + authJwtToken,
-                },
-                body: JSON.stringify(event.data),
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                alert('Edited successfuly!');
-            } else {
-                alert('Failed to edit.');
-            }
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            alert('An error occurred while submitting the form.');
-        }
-    },
     filterByRatingOrDate() {
         if (this.selectedFilter == 'pubDate') {
         this.filteredPersons = _.orderBy(this.persons, ['PubDate'], ['desc']);
@@ -422,22 +622,11 @@ export default {
         }
 
     },
-        previousPage() {
-        if (this.currentPage > 1) {
-            this.currentPage--;
-        }
-    },
     toggleDropdown() {
         this.isOpen = !this.isOpen;
     },
     toggleDropdownAuth() {
         this.isOpenAuth = !this.isOpenAuth;
-    },
-    selectFilter(option: any) {
-        this.selectedFilter = option;
-        this.isOpen = false; 
-        this.currentPage = 1;
-        this.filterByRatingOrDate();
     },
     getStarStyle(rating: any) {
         let startColor;
@@ -472,11 +661,6 @@ export default {
         }
         
     },
-    nextPage() {
-        if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        }
-    },
     toggleModal() {
         this.isModalOpen = !this.isModalOpen;
     },
@@ -489,12 +673,6 @@ export default {
     },
     closeModal() {
         this.isModalOpen = false;
-    },
-    filterByTopic(topic: any) {
-        this.filteredPersons = this.persons.filter(person => person.Topic === topic);
-        this.selectedTopic = topic;
-        this.currentPage = 1;
-        this.closeModal();
     },
     formatDateTime(date: any) {
         if (isToday(date)) {
@@ -742,6 +920,108 @@ export default {
 
 .drawer ul li:hover {
     text-decoration: underline;
+}
+
+.posts-section {
+  padding: 20px;
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.posts-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.post-card {
+  background-color: #66c9ff;
+  border-radius: 20px;
+  padding: 20px;
+  width: 300px;
+  margin: 10px;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.post-header h3 {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.rating {
+  display: flex;
+}
+
+.star {
+  color: yellow;
+}
+
+.post-info {
+  font-size: 0.9rem;
+  margin: 10px 0;
+  color: white;
+}
+
+.post-text {
+  font-size: 1rem;
+  margin: 10px 0;
+  color: white;
+}
+
+.post-avatar {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.post-avatar img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.delete-button {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination-controls button {
+  background-color: #66c9ff;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 0 10px;
+}
+
+.pagination-controls span {
+  font-size: 1.2rem;
 }
 </style>
     

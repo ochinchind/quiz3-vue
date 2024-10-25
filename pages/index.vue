@@ -234,7 +234,7 @@ const stateLogin = reactive({
 import _ from 'lodash';
 import { format, formatDistanceToNowStrict, isToday } from 'date-fns';
 import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
-import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget } from '~/scripts/auth'
+import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget, SendLastActivity } from '~/scripts/auth'
 
 interface Person {
   id: number;
@@ -336,6 +336,9 @@ export default {
     authUserIdChange(isAuthValue ?? '');
     changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
     authJwtTokenChange(authJwtTokenValue ?? '');
+    if (authJwtToken !== null) {
+          SendLastActivity();
+      }
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);

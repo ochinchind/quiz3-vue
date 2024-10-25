@@ -113,3 +113,27 @@ export async function changePasswordForget() {
         isLoadingForgetChangePassword.value = false;
     }
 }
+
+export async function SendLastActivity() {
+    try {
+        const response = await fetch('/api/sendlastactivity', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authJwtToken.value,
+            },
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            console.log('send last activity');
+        } else {
+            alert('Failed to send last activity.');
+        }
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('An error occurred while submitting the form.');
+    } finally {
+
+    }
+}

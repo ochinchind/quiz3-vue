@@ -130,7 +130,12 @@
                         <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
                         <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: {{ stateUser.age }}</div>
                         <div style="font-size: 2rem; margin-top: 2rem;">{{ stateUser.location }}</div>
-                        <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: was 5 minutes ago</div>
+                        <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: 
+                            <span v-if="stateUser.last_activity">
+                                {{ formatDistanceToNow(new Date(stateUser.last_activity), { addSuffix: true }) }}
+                            </span>
+                            <span v-else>Loading...</span>
+                        </div>
                         <div style=" font-size: 2rem;margin-top: 2rem;">Current rating: <span class="stars" :style="getStarStyle(stateUser.rating)">
                             ★★★★★
                         </span></div>
@@ -208,7 +213,7 @@
 import { object, string, number, ref, type InferType } from 'yup'
 import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
 import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
-import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget } from '~/scripts/auth'
+import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget, SendLastActivity } from '~/scripts/auth'
 import { ref as refVue, computed } from 'vue'
 
 
@@ -239,7 +244,8 @@ const stateUser = reactive({
     username: undefined,
     age: undefined,
     location: undefined,
-    rating: undefined
+    rating: undefined,
+    last_activity: undefined,
 })
 
 
@@ -297,6 +303,7 @@ async function getUser() {
             stateUser.age = data.value.user.age;
             stateUser.location = data.value.user.location;
             stateUser.rating = data.value.user.rating;
+            stateUser.last_activity = data.value.user.last_activity;
 
             console.log(data.value.user);
         } else {
@@ -466,7 +473,7 @@ onMounted(() => {
 
 <script lang="ts">
 import _ from 'lodash';
-import { format, formatDistanceToNowStrict, isToday } from 'date-fns';
+import { format, formatDistanceToNowStrict, isToday, formatDistanceToNow } from 'date-fns';
 
 interface User {
   id: number;
@@ -577,7 +584,9 @@ export default {
     authUserIdChange(isAuthValue ?? '');
     changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
     authJwtTokenChange(authJwtTokenValue ?? '');
-
+        if (authJwtToken !== null) {
+            SendLastActivity();
+        }
     },
     beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);

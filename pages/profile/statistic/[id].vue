@@ -114,25 +114,37 @@
     
     
     
-        <div style="padding: 3rem;">
-            <div v-if="followedUsers.length" style="padding: 3rem; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;">
-                <h3 style="color: #294BFF; font-size: 1.5rem; margin-bottom: 1rem;">Followed Users</h3>
-                <ul style="list-style: none; padding: 0;">
-                    <li v-for="user in followedUsers" :key="user.username" style="margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background-color: #fff; display: flex; align-items: center;">
-                        <img :src="user.avatar" alt="Avatar" width="50" height="50" style="border-radius: 50%; margin-right: 1rem;">
-                        <a :href="`/profile/${user.id}`" style="text-decoration: none; color: #294BFF; font-size: 1.2rem; font-weight: bold;">{{ user.username }}</a>
-                    </li>
-                </ul>
+        <div class="statistics-page" style="padding: 2rem;">
+        <h2 style="font-size: 2rem; color: #294BFF; margin-bottom: 2rem;">
+            Look at your profile statistics:
+        </h2>
+        
+        <div v-if="statistics" class="statistics">
+            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
+                <strong>Viewers:</strong> {{ statistics.viewers }}
             </div>
-            <div v-else style="padding: 3rem; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; text-align: center;">
-                <p style="color: #888;">No followed users.</p>
+            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
+                <strong>Subscribers:</strong> {{ statistics.subscribers }}
+            </div>
+            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
+                <strong>Posts Count:</strong> {{ statistics.postCount }}
+            </div>
+            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
+                <strong>Comments:</strong> {{ statistics.comments }}
+            </div>
+            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
+                <strong>Likes:</strong> {{ statistics.likes }}
             </div>
         </div>
+        <div v-else class="loading">
+            <p style="font-size: 1.5rem; color: #888;">Loading your statistics...</p>
+        </div>
+    </div>
     
     </div>
     </template>
     <script setup lang="ts">
-    import { object, string, number, ref, type InferType } from 'yup'
+    import { object, string, number, type InferType } from 'yup'
     import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
     import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
     import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget, SendLastActivity } from '~/scripts/auth'
@@ -162,6 +174,29 @@
     
     
     const route = useRoute();
+
+    const statistics = ref<null | { viewers: number, subscribers: number, postCount: number, comments: number, likes: number }>(null)
+
+
+    async function fetchStatistics(userId: string) {
+        try {
+            const response = await fetch(`/api/profile/${userId}`)
+            if (response.ok) {
+                const data = await response.json()
+                console.log(data);
+                statistics.value = data.statistics
+            } else {
+                console.error("Failed to fetch statistics.")
+            }
+        } catch (error) {
+            console.error("Error fetching statistics:", error)
+        }
+    }
+
+    onMounted(() => {
+        const userId = route.params.id || "0" 
+        fetchStatistics(userId as string)
+    })
 
     </script>
     
@@ -617,6 +652,17 @@
     
     .border-blue {
         background: #5BB9CD; color: white; padding: 0rem 1rem; width: 200px; border-radius: 8px;
+    }
+
+    .statistics-page {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: #f5f5f5;
+    }
+
+    .statistics-page h2 {
+        color: #294BFF;
     }
     
     .drawer {

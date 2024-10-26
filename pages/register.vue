@@ -13,11 +13,11 @@
     margin-top: 3rem;
     margin-bottom: 3rem;">
           <UForm @submit="LoginSubmit" :schema="schemaLogin" :state="stateLogin" >
-            <UFormGroup label="Username" name="username">
+            <UFormGroup name="username">
                 <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.username" type="text" placeholder="Enter username" />
             </UFormGroup>
-            <UFormGroup label="Password" name="password">
-                <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
+            <UFormGroup name="password">
+                <UInput style="background: white; color: black; font-size: 2rem; margin-top: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
             </UFormGroup>
             <div style="margin-top: 2rem;">
               <button @click="toggleForgetPasswordModal" type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
@@ -413,7 +413,7 @@ export default {
                 authJwtTokenChange(result.token);
                 authUserIdChange(result.userId);
             } else {
-                alert('Failed to save data.');
+                alert('Failed to save data: ' + result.message);
             }
         } catch (error) {
             console.error('Error submitting form:', error);

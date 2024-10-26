@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
 
         if (body.user_id) {
             result = await sql`SELECT
+                posts.id,
                 posts.post_text,
                 posts.rating,
                 posts.user_id,

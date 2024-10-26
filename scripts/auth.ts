@@ -30,7 +30,9 @@ export function authJwtTokenChange(val: string) {
 
 export function logout() {
     localStorage.removeItem('isAuth');
+    localStorage.removeItem('jwtToken');
     changeIsAuth(false);
+    window.location.reload();
 }
 
 export const showForgetPasswordModal = ref(false)

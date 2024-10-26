@@ -14,11 +14,11 @@
     margin-top: 3rem;
     margin-bottom: 3rem;">
           <UForm @submit="LoginSubmit" :schema="schemaLogin" :state="stateLogin" >
-            <UFormGroup label="Username" name="username">
+            <UFormGroup name="username">
                 <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.username" type="text" placeholder="Enter username" />
             </UFormGroup>
-            <UFormGroup label="Password" name="password">
-                <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
+            <UFormGroup  name="password">
+                <UInput style="background: white; color: black; font-size: 2rem; margin-top: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
             </UFormGroup>
             <div style="margin-top: 2rem;">
               <button @click="toggleForgetPasswordModal" type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
@@ -123,14 +123,14 @@
                     <div v-else>Profile</div>
                 </div>
                 <div style="display: flex; ">
-                    <div style="width: 33%">
+                    <div style="width: 23%">
                         <img width="100px" height="200px" src="/static/img/avatar.png">
                     </div>
-                    <div v-show="userId != authUserId" style="width: 33%">
+                    <div v-show="userId != authUserId" style="width: 43%">
                         <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
                         <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: {{ stateUser.age }}</div>
                         <div style="font-size: 2rem; margin-top: 2rem;">{{ stateUser.location }}</div>
-                        <div style="color:green; font-size: 2rem;margin-top: 2rem;">Activity: 
+                        <div style="color:red; font-size: 2rem;margin-top: 2rem;">Activity: 
                             <span v-if="stateUser.last_activity">
                                 {{ formatDistanceToNow(new Date(stateUser.last_activity), { addSuffix: true }) }}
                             </span>
@@ -140,7 +140,7 @@
                             ★★★★★
                         </span></div>
                     </div>
-                    <div v-show="userId == authUserId" style="width: 33%">
+                    <div v-show="userId == authUserId" style="width: 43%">
                         <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
                         <UFormGroup  style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;" name="age">
                             <span>Age:</span> <UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model.number="stateUser.age"  type="number" placeholder="Enter age" />
@@ -151,11 +151,17 @@
                             ★★★★★
                         </span></div>
                     </div>
-                    <div style="width: 33%">
+                    <div style="width: 33%; justify-content: center; text-align: center">
                         <div v-if="userId == authUserId">
-                            <div style=" font-size: 2rem;margin-top: 2rem;">Statistic</div>
+                            <div style=" font-size: 2rem;margin-top: 2rem;">
+                                <a :href="`/profile/statistic/${userId}`"  style="background: #6BEBFC;
+color:white; padding: 2rem; border-radius: 2rem;">
+                                    STATISTIC
+                            </a>
+                            </div>
                             <div style=" font-size: 2rem;margin-top: 2rem;"> 
-                                <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem;">
+                                <UButton type="submit" style="background: #6BEBFC;
+color:white; padding: 2rem; border-radius: 2rem; font-size: 2rem">
                                     SAVE
                                 </UButton>
                             </div>
@@ -173,9 +179,9 @@
         </UForm>
     </div>
 
-    <section class="posts-section">
+    <section v-if="posts && posts.length != 0" class="posts-section">
         <h2>Latest posts</h2>
-        <div class="reviews">
+        <div  class="reviews">
             <div  v-for="(post, index) in paginatedPosts" :key="index"  class="review-card">
                     <div class="review-details">
                         <div style="display: flex; justify-content: space-between;">
@@ -195,13 +201,13 @@
                         </div>
                         <p style="word-break: break-all;">{{ post.post_text }}</p>
                         <div v-if="userId == authUserId" style="display: flex; justify-content: end;">
-                        <button class="like-button" style="background:red;" @click="deletePost(index)">Delete</button>
+                        <button class="like-button" style="background:red;" @click="deletePost(post.id)">Delete</button>
                         </div>
                     </div>
                 </div>
         </div>
 
-        <div class="pagination-controls">
+        <div v-if="posts && posts.length != 0" class="pagination-controls">
         <button v-if="totalPages > 1"  @click="prevPage" :disabled="currentPage === 1">◀</button>
         <span>{{ currentPage }} / {{ totalPages }}</span>
         <button v-if="totalPages > 1"  @click="nextPage" :disabled="currentPage === totalPages">▶</button>
@@ -320,6 +326,7 @@ const currentPage = refVue(1)
 const itemsPerPage = refVue(2)
 
 interface Post {
+    id: number;
     post_text: string;
     rating: number;
     user_id: number;

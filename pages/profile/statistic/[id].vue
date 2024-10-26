@@ -279,7 +279,7 @@
         authUserIdChange(isAuthValue ?? '');
         changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
         authJwtTokenChange(authJwtTokenValue ?? '');
-            if (authJwtToken !== null) {
+            if (authJwtToken.value !== null && authJwtToken.value !== '') {
                 SendLastActivity();
                 this.fetchFollowedUsers();
             }

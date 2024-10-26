@@ -470,7 +470,7 @@ onMounted(() => {
     changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
     authJwtTokenChange(authJwtTokenValue ?? '');
 
-    if (authJwtToken.value) {
+    if (authJwtToken.value !== null && authJwtToken.value !== '') {
         checkFollowStatus();
     } else {
         console.warn('No auth token found in localStorage.');
@@ -591,7 +591,7 @@ export default {
     authUserIdChange(isAuthValue ?? '');
     changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
     authJwtTokenChange(authJwtTokenValue ?? '');
-        if (authJwtToken !== null) {
+        if (authJwtToken.value !== null && authJwtToken.value !== '') {
             SendLastActivity();
         }
     },

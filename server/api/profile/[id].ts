@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
                 (SELECT COUNT(*) FROM users_followings WHERE user_id_following = ${userId}) AS subscribers,
                 (SELECT COUNT(*) FROM posts WHERE user_id = ${userId}) AS postCount
         `;
-        console.log("Statistics Result:", statsResult);
 
         // Close database connection after the query
         event.waitUntil(sqlSelect.end());

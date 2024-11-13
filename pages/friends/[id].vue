@@ -114,32 +114,45 @@
     
     
     
-        <div class="statistics-page" style="padding: 2rem;">
-        <h2 style="font-size: 2rem; color: #294BFF; margin-bottom: 2rem;">
-            Look at your profile statistics:
-        </h2>
-        
-        <div v-if="statistics" class="statistics">
-            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
-                <strong>Viewers:</strong> {{ statistics.viewers }}
+        <div style="padding: 2rem;">
+            <h1 class="page-title">{{ userId == authUserId ? 'My friends' : 'Friends' }}</h1>
+
+            <!-- Friends List -->
+            <div v-if="friends" class="friends-list">
+            <div class="friend-card" v-for="friend in friends" :key="friend.id">
+                <img :src="friend.avatar" alt="Friend Avatar" class="friend-avatar" />
+
+                <div class="friend-info">
+                <a :href="`/profile/${friend.id}`" class="friend-name">{{ friend.username }}</a>
+                <p class="friend-activity">
+                    Activity: {{ formatDistanceToNow(new Date(friend.last_activity), { addSuffix: true }) || 'Just now' }}
+                </p>
+                </div>
+
+                <!-- Buttons and Rename Input -->
+                <div class="friend-actions">
+                <button v-if="userId == authUserId" @click="followUser(friend.id)" class="unfollow-btn">Unfollow</button>
+                
+                <!-- Rename button/input -->
+                <div v-if="friend.renameMode" class="rename-container">
+                    <input 
+                    v-model="friend.newName" 
+                    class="rename-input" 
+                    :placeholder="friend.username" 
+                    type="text" 
+                    />
+                    <button @click="saveNewName(friend)" class="save-btn">Save</button>
+                </div>
+                <button v-else @click="startRename(friend)" class="rename-btn">Rename</button>
+                
+                <button class="chat-btn">Chat</button>
+                </div>
             </div>
-            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
-                <strong>Subscribers:</strong> {{ statistics.subscribers }}
             </div>
-            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
-                <strong>Posts Count:</strong> {{ statistics.postCount }}
-            </div>
-            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
-                <strong>Comments:</strong> {{ statistics.comments }}
-            </div>
-            <div style="font-size: 1.5rem; color: #333; margin-bottom: 1rem;">
-                <strong>Likes:</strong> {{ statistics.likes }}
+            <div v-else class="loading">
+            <p style="font-size: 1.5rem; color: #888;">Loading friends...</p>
             </div>
         </div>
-        <div v-else class="loading">
-            <p style="font-size: 1.5rem; color: #888;">Loading your statistics...</p>
-        </div>
-    </div>
     
     </div>
     </template>
@@ -149,7 +162,7 @@
     import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
     import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget, SendLastActivity } from '~/scripts/auth'
     import { ref as refVue, computed } from 'vue'
-    
+
     
     const schemaLogin = object({
         username: string().required('Username is required').max(255, 'Maximum 255 characters'),
@@ -165,45 +178,125 @@
         password: undefined
     })
     
+    export interface Friend {
+    id: number;
+    username: string;
+    avatar: string;
+    last_activity: string;
+    renameMode?: boolean;
+    newName?: string;  
+    }
     
     const schemaUser = object({
         username: string().required('Username is required').max(255, 'Maximum 255 characters'),
         age: number().required().positive().integer(),
         location: string().nullable(),
     })
-    
-    
+
     const route = useRoute();
+    const friends = ref<Friend[] | null>(null);
 
-    const statistics = ref<null | { viewers: number, subscribers: number, postCount: number, comments: number, likes: number }>(null)
-
-
-    async function fetchStatistics(userId: string) {
+    // Function to fetch friends from the API
+    async function fetchFriends(userId: string): Promise<void>  {
         try {
-            const response = await fetch(`/api/profile/${userId}`)
+            const response = await fetch(`/api/friends/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({}) // Your request body here, if required
+            });
             if (response.ok) {
-                const data = await response.json()
-                console.log(data);
-                statistics.value = data.statistics
+                const data = await response.json();
+                friends.value = data.followedUsers.map((friend: Friend) => ({
+                    ...friend,
+                    renameMode: false,
+                    newName: friend.username
+                })) as Friend[];
             } else {
-                console.error("Failed to fetch statistics.")
+                console.error("Failed to fetch friends.");
             }
         } catch (error) {
-            console.error("Error fetching statistics:", error)
+            console.error("Error fetching friends:", error);
         }
     }
 
-    onMounted(() => {
-        const userId = route.params.id || "0" 
-        fetchStatistics(userId as string)
-    })
+    const userId = route.params.id || '0';
 
+    onMounted(() => {
+        fetchFriends(userId);
+    });
+
+
+    async function followUser(friendId: any) {
+        try {
+            const token = authJwtToken ?? localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('Authentication token is missing.');
+                return;
+            }
+
+            const response = await fetch('/api/followuser', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authJwtToken.value,
+                },
+                body: JSON.stringify({user_id: friendId}),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert(result.message);
+                fetchFriends(userId);
+            } else {
+                alert('Failed to following.');
+            }
+        } catch (error) {
+            console.error('Error following :', error);
+            alert('An error occurred while following ');
+        }
+    }
+
+    // Start rename mode for a specific friend
+    function startRename(friend: Friend) {
+    friend.renameMode = true;
+    }
+
+    // Save the new name for a friend
+    async function saveNewName(friend: Friend) {
+    if (!friend.newName || friend.newName === friend.username) {
+        friend.renameMode = false;
+        return; // No change made
+    }
+
+    try {
+        const response = await fetch(`/api/updateUsername`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authJwtToken.value,
+        },
+        body: JSON.stringify({ user_id: friend.id, new_username: friend.newName })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+        friend.username = friend.newName; // Update the displayed name
+        friend.renameMode = false; // Exit rename mode
+        } else {
+        console.error('Failed to update name:', result.message);
+        }
+    } catch (error) {
+        console.error('Error updating name:', error);
+    }
+    }
     </script>
     
     <script lang="ts">
     import _ from 'lodash';
-    import { format, formatDistanceToNowStrict, isToday, formatDistanceToNow } from 'date-fns';
-    
+    import { format, formatDistanceToNowStrict, isToday, formatDistanceToNow, sub, isSameDay, type Duration  } from 'date-fns';
+
     interface User {
       id: number;
       activated: boolean;
@@ -654,17 +747,31 @@
         background: #5BB9CD; color: white; padding: 0rem 1rem; width: 200px; border-radius: 8px;
     }
 
-    .statistics-page {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 1rem;
-        background-color: #f5f5f5;
-    }
-
-    .statistics-page h2 {
-        color: #294BFF;
-    }
-    
+    .statistic-page {
+  font-family: Arial, sans-serif;
+  background-color: #e0f7fc;
+  color: #4c648e;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  font-size: 2rem;
+}
+.chart-container {
+  margin: 20px auto;
+  width: 80%;
+}
+.date-picker {
+  display: flex;
+  justify-content: end;
+  align-items: end;
+  margin-top: 20px;
+}
+.selected-date {
+  margin-left: 10px;
+  font-size: 1.2rem;
+  color: #4c648e;
+}
     .drawer {
         position: fixed;
         top: 0;
@@ -800,5 +907,189 @@
     .pagination-controls span {
       font-size: 1.2rem;
     }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100px; /* Adjust the width */
+        height: 90px; /* Adjust the height */
+        background-color: rgba(173, 216, 230, 0.5); /* Light blue with some transparency */
+        border-radius: 50px; /* Makes it oval */
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .back-button:hover {
+        background-color: rgba(173, 216, 230, 0.7); /* Darker on hover */
+    }
+
+    .back-button .arrow {
+        font-size: 60px;
+        color: white;
+    }
+
+    .friends-page {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(to bottom, #b3e5fc, #ffffff);
+}
+
+/* Notification bar styling */
+.notification-bar {
+  background-color: #fef0a1;
+  color: #8a2d06;
+  font-weight: bold;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Page title styling */
+.page-title {
+  font-size: 2.5rem;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+}
+
+/* Friends list container styling */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Individual friend card styling */
+.friend-card {
+  display: flex;
+  align-items: center;
+  background-color: #e0f7fa;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 100%;
+}
+
+/* Avatar image styling */
+.friend-avatar {
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  margin-right: 1rem;
+}
+.friend-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.friend-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rename-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rename-input {
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.save-btn, .unfollow-btn, .rename-btn, .chat-btn {
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.unfollow-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.rename-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.chat-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+/* Friend name and activity info styling */
+.friend-info {
+  flex: 1;
+  text-align: left;
+}
+
+.friend-name {
+  font-size: 1.5rem;
+  color: #294bff;
+  margin: 0;
+}
+
+.friend-activity {
+  font-size: 0.9rem;
+  color: #8a2d06;
+  font-style: italic;
+}
+
+/* Action buttons styling */
+.friend-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.unfollow-btn {
+  background-color: #ff5252;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.rename-btn {
+  background-color: #d8eefe;
+  color: #294bff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.chat-btn {
+  background-color: #a1f0d2;
+  color: #294bff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Hover effects for buttons */
+.unfollow-btn:hover {
+  background-color: #ff3333;
+}
+
+.rename-btn:hover {
+  background-color: #c1e3ff;
+}
+
+.chat-btn:hover {
+  background-color: #81e7b5;
+}
     </style>
         

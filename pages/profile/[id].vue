@@ -154,7 +154,7 @@
                     <div style="width: 33%; justify-content: center; text-align: center">
                         <div v-if="userId == authUserId">
                             <div style=" font-size: 2rem;margin-top: 2rem;">
-                                <a :href="`/profile/statistic/${userId}`"  style="background: #6BEBFC;
+                                <a :href="`/statistic/${userId}`"  style="background: #6BEBFC;
 color:white; padding: 2rem; border-radius: 2rem;">
                                     STATISTIC
                             </a>
@@ -165,12 +165,25 @@ color:white; padding: 2rem; border-radius: 2rem; font-size: 2rem">
                                     SAVE
                                 </UButton>
                             </div>
+                            <div style=" font-size: 2rem;margin-top: 2rem;">
+                                <a :href="`/friends/${userId}`"  style="background: #6BEBFC;
+color:white; padding: 2rem; border-radius: 2rem;">
+                                    FRIENDS
+                                </a>
+                            </div>
                         </div>
                         <div v-else>
                             <div style=" font-size: 2rem;margin-top: 2rem;"> 
                                 <button @click="followUser()" type="button" style="background: lime; padding: 2rem; border-radius: 2rem;">
                                     {{ isFollowing ? 'Unfollow' : 'Follow' }}
                                 </button>
+                            </div>
+
+                            <div style=" font-size: 2rem;margin-top: 2rem;">
+                                <a :href="`/friends/${userId}`"  style="background: #6BEBFC;
+color:white; padding: 2rem; border-radius: 2rem;">
+                                    FRIENDS
+                                </a>
                             </div>
                         </div>
                     </div>

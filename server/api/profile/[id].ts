@@ -5,34 +5,37 @@ export default defineEventHandler(async (event) => {
     const headers = event.req.headers;
     const sqlSelect = usePostgres();
     const { id } = event.context.params;
+    const query = getQuery(event);  // Get query parameters from the request
+    const { startDate, endDate } = query;
 
     try {
-        const userResult = await sqlSelect`SELECT id FROM users WHERE id = ${id}`;
-        
-        if (userResult.length === 0) {
-            return { success: false, message: 'User does not exist or token is invalid' };
+        // Validate date range
+        if (!startDate || !endDate) {
+            return { success: false, message: 'Date range is required' };
         }
-        
-        const userId = userResult[0].id;
 
-        const [statsResult] = await sqlSelect`
+        const statsResult = await sqlSelect`
             SELECT 
-                (SELECT COUNT(*) FROM users_followings WHERE user_id_following = ${userId}) AS subscribers,
-                (SELECT COUNT(*) FROM posts WHERE user_id = ${userId}) AS postCount
+                COUNT(*) AS postcount,  -- lowercase alias
+                DATE(created_at) AS postdate  -- lowercase alias
+            FROM posts
+            WHERE user_id = ${id} AND created_at BETWEEN ${startDate} AND ${endDate}
+            GROUP BY postdate
+            ORDER BY postdate
         `;
 
         // Close database connection after the query
         event.waitUntil(sqlSelect.end());
 
+        // Format the results to match the desired response structure
+        const statistics = statsResult.map(row => ({
+            date: row.postdate,  // Access with lowercase
+            postCount: row.postcount,  // Access with lowercase
+        }));
+
         return { 
             success: true, 
-            statistics: {
-                viewers: 0,
-                subscribers: statsResult.subscribers,
-                postCount: statsResult.postcount,
-                comments: 0,
-                likes: 0
-            }
+            statistics,
         };
     } catch (error) {
         console.error('Error retrieving statistics from PostgreSQL:', error);

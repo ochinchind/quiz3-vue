@@ -115,42 +115,40 @@
     
     
         <div style="padding: 2rem;">
-            <h1 class="page-title">{{ userId == authUserId ? 'My friends' : 'Friends' }}</h1>
-
-            <!-- Friends List -->
-            <div v-if="friends" class="friends-list">
-            <div class="friend-card" v-for="friend in friends" :key="friend.id">
-                <img :src="friend.avatar" alt="Friend Avatar" class="friend-avatar" />
-
-                <div class="friend-info">
-                <a :href="`/profile/${friend.id}`" class="friend-name">{{ friend.username }}</a>
-                <p class="friend-activity">
-                    Activity: {{ formatDistanceToNow(new Date(friend.last_activity), { addSuffix: true }) || 'Just now' }}
-                </p>
+            <div class="chat-container">
+                <div v-if="messages && messages.length === 0" class="no-messages">
+                    <p>No messages yet. Start the conversation!</p>
+                </div>
+                <div v-else class="messages" ref="messageContainer">
+                    <div 
+                        v-for="(msg, index) in messages" 
+                        :key="index" 
+                        :class="['message', msg.user_id_from == authUserId ? 'user' : 'friend']"
+                    >
+                        <img 
+                            :src="msg.user_id_from == authUserId ? msg.avatar_from : msg.avatar_to" 
+                            alt="Avatar" 
+                            class="avatar" 
+                        />
+                        
+                        <div class="message-content">
+                            <span class="name">{{ msg.user_id_from == authUserId ? 'You' : msg.username_from }}</span>
+                            <span class="status">{{ msg.user_id_from == authUserId ? 'For now' : formatActivity(msg.last_activity_from) }}</span>
+                            <p class="text">{{ msg.message }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Buttons and Rename Input -->
-                <div class="friend-actions">
-                <button v-if="userId == authUserId" @click="followUser(friend.id)" class="unfollow-btn">Unfollow</button>
-                
-                <!-- Rename button/input -->
-                <div v-if="friend.renameMode" class="rename-container">
+                <div class="message-input-container">
                     <input 
-                    v-model="friend.newName" 
-                    class="rename-input" 
-                    :placeholder="friend.username" 
-                    type="text" 
+                        v-model="newMessage" 
+                        type="text" 
+                        placeholder="Type a message..." 
+                        class="message-input" 
+                        @keyup.enter="sendMessage" 
                     />
-                    <button @click="saveNewName(friend)" class="save-btn">Save</button>
+                    <button @click="sendMessage" class="send-button">Send</button>
                 </div>
-                <button v-else @click="startRename(friend)" class="rename-btn">Rename</button>
-                
-                <a v-if="userId == authUserId"  :href="`/chat/${friend.id}`" class="chat-btn">Chat</a>
-                </div>
-            </div>
-            </div>
-            <div v-else class="loading">
-            <p style="font-size: 1.5rem; color: #888;">Loading friends...</p>
             </div>
         </div>
     
@@ -161,7 +159,7 @@
     import type { FormError, FormErrorEvent, FormSubmitEvent } from '#ui/types'
     import { showLoginModal, toggleLoginModal, closeLoginModal } from '~/scripts/loginModal'
     import { isAuth, authUserId, authJwtToken, trueIsAuth, toggleIsAuth, changeIsAuth, falseIsAuth, authUserIdChange, authJwtTokenChange, logout, showForgetPasswordModal, toggleForgetPasswordModal, closeForgetPasswordModal, isLoadingForgetPassword, sendForgetPasswordToEmail, isLoadingForgetChangePassword, changePasswordForget, SendLastActivity } from '~/scripts/auth'
-    import { ref as refVue, computed } from 'vue'
+    import { ref as refVue, computed, nextTick } from 'vue'
 
     
     const schemaLogin = object({
@@ -178,41 +176,50 @@
         password: undefined
     })
     
-    export interface Friend {
-    id: number;
-    username: string;
-    avatar: string;
-    last_activity: string;
-    renameMode?: boolean;
-    newName?: string;  
-    }
-    
     const schemaUser = object({
         username: string().required('Username is required').max(255, 'Maximum 255 characters'),
         age: number().required().positive().integer(),
         location: string().nullable(),
     })
 
-    const route = useRoute();
-    const friends = ref<Friend[] | null>(null);
+    interface Message {
+        user_id_to: string;
+        message: string;
+        avatar_to: string;
+        last_activity_to: string;
+        username_to: string;
+        user_id_from: string;
+        avatar_from: string;
+        last_activity_from: string;
+        username_from: string;
+    }
 
-    // Function to fetch friends from the API
-    async function fetchFriends(userId: string): Promise<void>  {
+    const route = useRoute();
+    const messages = ref<Message[]>([]);
+
+    const newMessage = ref('');
+
+    async function fetchMessages(userId: string): Promise<void>  {
         try {
-            const response = await fetch(`/api/friends/${userId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({}) // Your request body here, if required
+            const token = authJwtToken ?? localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('Authentication token is missing.');
+                return;
+            }
+
+            const response = await fetch(`/api/chat/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authJwtToken.value,
+                },
+                body: JSON.stringify({})
             });
             if (response.ok) {
                 const data = await response.json();
-                friends.value = data.followedUsers.map((friend: Friend) => ({
-                    ...friend,
-                    renameMode: false,
-                    newName: friend.username
-                })) as Friend[];
+                messages.value = data.messages as Message[];
+                console.log("Fetched messages:", messages.value);
+                scrollToBottom();
             } else {
                 console.error("Failed to fetch friends.");
             }
@@ -221,76 +228,92 @@
         }
     }
 
-    const userId = route.params.id || '0';
-
-    onMounted(() => {
-        fetchFriends(userId);
+    function scrollToBottom() {
+        if (messageContainer.value) {
+            messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+        }
+    }
+    watch(messages, async () => {
+        await nextTick();  // Wait until messages are rendered
+        scrollToBottom();
     });
+    async function sendMessage() {
+        if (newMessage.value.trim() === '') return;
 
+        const userId = route.params.id as string;
+        const token = authJwtToken.value;
+        if (!token) {
+            alert('Authentication token is missing.');
+            return;
+        }
 
-    async function followUser(friendId: any) {
         try {
-            const token = authJwtToken ?? localStorage.getItem('jwtToken');
-            if (!token) {
-                alert('Authentication token is missing.');
-                return;
-            }
-
-            const response = await fetch('/api/followuser', {
+            const response = await fetch(`/api/chatsend`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + authJwtToken.value,
+                    'Authorization': 'Bearer ' + token,
                 },
-                body: JSON.stringify({user_id: friendId}),
+                body: JSON.stringify({
+                    message: newMessage.value,
+                    userId: userId,
+                }),
             });
 
-            const result = await response.json();
-            if (result.success) {
-                alert(result.message);
-                fetchFriends(userId);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    messages.value.push({
+                        user_id_from: authUserId,
+                        user_id_to: userId,
+                        message: newMessage.value,
+                        avatar_from: data.avatar,
+                        username_from: data.username,
+                        last_activity_from: new Date().toISOString(),
+                    });
+                    newMessage.value = '';
+                    scrollToBottom();
+                } else {
+                    console.error('Message failed to send.');
+                }
             } else {
-                alert('Failed to following.');
+                console.error("Failed to send message.");
             }
         } catch (error) {
-            console.error('Error following :', error);
-            alert('An error occurred while following ');
+            console.error("Error sending message:", error);
         }
     }
 
-    // Start rename mode for a specific friend
-    function startRename(friend: Friend) {
-    friend.renameMode = true;
+    const userId = route.params.id || '0';
+
+    // Helper function to format activity (time)
+    function formatActivity(lastActivity: string) {
+        const timeAgo = formatDistanceToNow(new Date(lastActivity), { addSuffix: true });
+        return timeAgo;
     }
 
-    // Save the new name for a friend
-    async function saveNewName(friend: Friend) {
-    if (!friend.newName || friend.newName === friend.username) {
-        friend.renameMode = false;
-        return; // No change made
+    // Scroll to the latest message on load and when messages are updated
+    const messageContainer = ref(null);
+    onMounted(() => {
+    if (messageContainer.value) {
+        messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
     }
+    });
+    watch(messages, () => {
+    if (messageContainer.value) {
+        messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+    }
+    });
+    onMounted(() => {
 
-    try {
-        const response = await fetch(`/api/updateUsername`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + authJwtToken.value,
-        },
-        body: JSON.stringify({ user_id: friend.id, new_username: friend.newName })
-        });
+        var isAuthValue = localStorage.getItem('isAuth');
+        var authJwtTokenValue = localStorage.getItem('jwtToken');
+        authUserIdChange(isAuthValue ?? '');
+        changeIsAuth(isAuthValue !== null && !isNaN(Number(isAuthValue)));
+        authJwtTokenChange(authJwtTokenValue ?? '');
+        fetchMessages(userId);
+    });
 
-        const result = await response.json();
-        if (result.success) {
-        friend.username = friend.newName; // Update the displayed name
-        friend.renameMode = false; // Exit rename mode
-        } else {
-        console.error('Failed to update name:', result.message);
-        }
-    } catch (error) {
-        console.error('Error updating name:', error);
-    }
-    }
     </script>
     
     <script lang="ts">
@@ -328,48 +351,10 @@
         return {
             followedUsers: [],
             persons: [
-            { id: 1, PersonName: 'Vladimir', Avatar: '/static/img/avatar.png', PubDate: '2024-09-13', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 2, PersonName: 'Marlen', Avatar: '/static/img/avatar.png', PubDate: '2024-09-12', Rating: 3, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 3, PersonName: 'JackJones', Avatar: '/static/img/avatar.png', PubDate: '2024-09-11', Rating: 1, Commentary: 'Great product! Very Bad no way  no buying that s not good !', Topic: 'IT', Stars: 0 },
-            { id: 4, PersonName: 'Michael', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 3, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 5, PersonName: 'Jaseh', Avatar: '/static/img/avatar.png', PubDate: '2024-09-16', Rating: 5, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 6, PersonName: 'Onfroy', Avatar: '/static/img/avatar.png', PubDate: '2024-09-14', Rating: 4, Commentary: 'Great product!', Topic: 'AI', Stars: 0 },
-            { id: 7, PersonName: 'Billie', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 2, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 8, PersonName: 'Henry', Avatar: '/static/img/avatar.png', PubDate: '2024-09-18', Rating: 2, Commentary: 'Great product!', Topic: 'VR', Stars: 0 },
-            { id: 9, PersonName: 'Shahboz', Avatar: '/static/img/avatar.png', PubDate: '2024-09-12', Rating: 1, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 10, PersonName: 'Nikolai', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 11, PersonName: 'Tima', Avatar: '/static/img/avatar.png', PubDate: '2024-09-11', Rating: 5, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 12, PersonName: 'Timur', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 5, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 13, PersonName: 'Temirlan', Avatar: '/static/img/avatar.png', PubDate: '2024-09-12', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 14, PersonName: 'Serafim', Avatar: '/static/img/avatar.png', PubDate: '2024-08-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 15, PersonName: 'Steven', Avatar: '/static/img/avatar.png', PubDate: '2024-09-13', Rating: 2, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 16, PersonName: 'Maks', Avatar: '/static/img/avatar.png', PubDate: '2024-09-14', Rating: 3, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 17, PersonName: 'Akniet', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 1, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 18, PersonName: 'Baur', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 19, PersonName: 'Ainur', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 20, PersonName: 'Hawkin', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
+            
             ] as Person[],
             filteredPersons: [
-            { id: 1, PersonName: 'Vladimir', Avatar: '/static/img/avatar.png', PubDate: '2024-09-13', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 2, PersonName: 'Marlen', Avatar: '/static/img/avatar.png', PubDate: '2024-09-12', Rating: 3, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 3, PersonName: 'JackJones', Avatar: '/static/img/avatar.png', PubDate: '2024-09-11', Rating: 1, Commentary: 'Great product! Very Bad no way  no buying that s not good !', Topic: 'IT', Stars: 0 },
-            { id: 4, PersonName: 'Michael', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 3, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 5, PersonName: 'Jaseh', Avatar: '/static/img/avatar.png', PubDate: '2024-09-16', Rating: 5, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 6, PersonName: 'Onfroy', Avatar: '/static/img/avatar.png', PubDate: '2024-09-14', Rating: 4, Commentary: 'Great product!', Topic: 'AI', Stars: 0 },
-            { id: 7, PersonName: 'Billie', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 2, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 8, PersonName: 'Henry', Avatar: '/static/img/avatar.png', PubDate: '2024-09-18', Rating: 2, Commentary: 'Great product!', Topic: 'VR', Stars: 0 },
-            { id: 9, PersonName: 'Shahboz', Avatar: '/static/img/avatar.png', PubDate: '2024-09-12', Rating: 1, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 10, PersonName: 'Nikolai', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 11, PersonName: 'Tima', Avatar: '/static/img/avatar.png', PubDate: '2024-09-11', Rating: 5, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 12, PersonName: 'Timur', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 5, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 13, PersonName: 'Temirlan', Avatar: '/static/img/avatar.png', PubDate: '2024-09-12', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 14, PersonName: 'Serafim', Avatar: '/static/img/avatar.png', PubDate: '2024-08-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 15, PersonName: 'Steven', Avatar: '/static/img/avatar.png', PubDate: '2024-09-13', Rating: 2, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 16, PersonName: 'Maks', Avatar: '/static/img/avatar.png', PubDate: '2024-09-14', Rating: 3, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 17, PersonName: 'Akniet', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 1, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 18, PersonName: 'Baur', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 19, PersonName: 'Ainur', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
-            { id: 20, PersonName: 'Hawkin', Avatar: '/static/img/avatar.png', PubDate: '2024-09-15', Rating: 4, Commentary: 'Great product!', Topic: 'IT', Stars: 0 },
+                
             ] as Person[],
             topics: ['IT', 'AI', 'VR'],
             selectedTopic: 'IT',
@@ -409,7 +394,6 @@
         authJwtTokenChange(authJwtTokenValue ?? '');
             if (authJwtToken.value !== null && authJwtToken.value !== '') {
                 SendLastActivity();
-                this.fetchFollowedUsers();
             }
         },
         beforeUnmount() {
@@ -417,32 +401,6 @@
     
         },
         methods: {
-        async fetchFollowedUsers() {
-            try {
-                const token = authJwtToken.value ?? localStorage.getItem('jwtToken');
-                if (!token) {
-                    console.warn('User is not authenticated.');
-                    return;
-                }
-                const response = await fetch('/api/getfollowedusers', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    console.log(result);
-                    this.followedUsers = result.followedUsers;
-                } else {
-                    console.error('Failed to fetch followed users:', result.message);
-                }
-            } catch (error) {
-                console.error('Error fetching followed users:', error);
-            }
-        },
         async LoginSubmit(event: FormSubmitEvent<SchemaLoginType>) {
             event.preventDefault();
     
@@ -928,168 +886,103 @@ h1 {
         font-size: 60px;
         color: white;
     }
-
-    .friends-page {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 2rem;
-  background: linear-gradient(to bottom, #b3e5fc, #ffffff);
-}
-
-/* Notification bar styling */
-.notification-bar {
-  background-color: #fef0a1;
-  color: #8a2d06;
-  font-weight: bold;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-/* Page title styling */
-.page-title {
-  font-size: 2.5rem;
-  color: #ffffff;
-  margin-bottom: 1.5rem;
-}
-
-/* Friends list container styling */
-.friends-list {
+    .chat-container {
+  width: 100%;
+  height: 600px;
+  margin: 20px auto;
+  padding: 10px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
 }
 
-/* Individual friend card styling */
-.friend-card {
+.messages {
+  overflow-y: auto;
+  padding: 10px;
+  height: 100%;
   display: flex;
-  align-items: center;
-  background-color: #e0f7fa;
-  border-radius: 8px;
-  padding: 1rem;
-  width: 100%;
+  flex-direction: column;
 }
 
-/* Avatar image styling */
-.friend-avatar {
-  border-radius: 50%;
+.message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.avatar {
   width: 50px;
   height: 50px;
-  margin-right: 1rem;
-}
-.friend-avatar {
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
+  margin: 0 10px;
 }
 
-.friend-info {
-  display: flex;
-  flex-direction: column;
+.message-content {
+  max-width: 60%;
+  padding: 10px 15px;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.friend-actions {
-  display: flex;
-  gap: 0.5rem;
+.message.user .message-content {
+  background-color: #f0f0f0;
 }
 
-.rename-container {
-  display: flex;
-  gap: 0.5rem;
+.name {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #1e3a8a;
 }
 
-.rename-input {
-  padding: 0.3rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.friend .name {
+  color: #7000c1;
 }
 
-.save-btn, .unfollow-btn, .rename-btn, .chat-btn {
-  padding: 0.3rem 0.8rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.save-btn {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.unfollow-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-.rename-btn {
-  background-color: #2196F3;
-  color: white;
-}
-
-.chat-btn {
-  background-color: #4CAF50;
-  color: white;
-}
-/* Friend name and activity info styling */
-.friend-info {
-  flex: 1;
-  text-align: left;
-}
-
-.friend-name {
-  font-size: 1.5rem;
-  color: #294bff;
-  margin: 0;
-}
-
-.friend-activity {
+.status {
+  display: block;
   font-size: 0.9rem;
-  color: #8a2d06;
+  color: #39d33e;
   font-style: italic;
+  margin-bottom: 5px;
 }
 
-/* Action buttons styling */
-.friend-actions {
-  display: flex;
-  gap: 0.5rem;
+.text {
+  margin: 0;
+  color: #333;
+  font-size: 1rem;
 }
 
-.unfollow-btn {
-  background-color: #ff5252;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
+
+.message-input-container {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid #ccc;
 }
 
-.rename-btn {
-  background-color: #d8eefe;
-  color: #294bff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
+.message-input {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-.chat-btn {
-  background-color: #a1f0d2;
-  color: #294bff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
+.send-button {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
-/* Hover effects for buttons */
-.unfollow-btn:hover {
-  background-color: #ff3333;
-}
-
-.rename-btn:hover {
-  background-color: #c1e3ff;
-}
-
-.chat-btn:hover {
-  background-color: #81e7b5;
+.send-button:hover {
+    background-color: #0056b3;
 }
     </style>
         

@@ -178,8 +178,13 @@ color:white; padding: 2rem; border-radius: 2rem;">
                                     {{ isFollowing ? 'Unfollow' : 'Follow' }}
                                 </button>
                             </div>
-
                             <div style=" font-size: 2rem;margin-top: 2rem;">
+                                <a :href="`/chat/${userId}`"  style="background: #6BEBFC;
+color:white; padding: 2rem; border-radius: 2rem;">
+                                    CHAT NOW
+                                </a>
+                            </div>
+                            <div style=" font-size: 2rem;margin-top: 4rem;">
                                 <a :href="`/friends/${userId}`"  style="background: #6BEBFC;
 color:white; padding: 2rem; border-radius: 2rem;">
                                     FRIENDS

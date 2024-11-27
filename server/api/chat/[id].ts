@@ -29,15 +29,15 @@ export default defineEventHandler(async (event) => {
 
         const messages = await sqlSelectFollowed`
             SELECT 
-                u_to.id as user_id_to,
+                chat.user_id_to,
                 chat.message,
-                u_to.avatar as avatar_to,
-                u_to.last_activity as last_activity_to,
-                u_to.username as username_to,
-                u_from.id as user_id_from,
-                u_from.avatar as avatar_from,
-                u_from.last_activity as last_activity_from,
-                u_from.username as username_from
+                u_to.avatar AS avatar_to,
+                u_to.last_activity AS last_activity_to,
+                COALESCE(following_from.name, u_from.username) AS username_from,
+                chat.user_id_from,
+                u_from.avatar AS avatar_from,
+                u_from.last_activity AS last_activity_from,
+                u_to.username AS username_to
             FROM 
                 chat_messages chat
             LEFT JOIN 
@@ -45,11 +45,17 @@ export default defineEventHandler(async (event) => {
             ON 
                 chat.user_id_to = u_to.id
             LEFT JOIN 
+                users_followings following_from
+            ON
+                following_from.user_id_following = chat.user_id_from AND following_from.user_id = chat.user_id_to
+            LEFT JOIN 
                 users u_from
             ON
                 chat.user_id_from = u_from.id
             WHERE
-                (chat.user_id_to = ${authenticatedUserId} AND chat.user_id_from = ${id}) OR (chat.user_id_to = ${id} AND chat.user_id_from = ${authenticatedUserId})
+                (chat.user_id_to = ${authenticatedUserId} AND chat.user_id_from = ${id}) 
+                OR 
+                (chat.user_id_to = ${id} AND chat.user_id_from = ${authenticatedUserId})
             ORDER BY
                 chat.created_at ASC
         `;

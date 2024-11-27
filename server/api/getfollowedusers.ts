@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         const followedUsers = await sqlSelectFollowed`
             SELECT 
                 u.id,
-                u.username, 
+                uf.name as username, 
                 u.avatar
             FROM 
                 users_followings uf

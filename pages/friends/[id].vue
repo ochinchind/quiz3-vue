@@ -870,6 +870,7 @@ h1 {
         width: 300px;
         height: 100vh;
         text-align: center;
+        overflow: scroll;
     }
     
     .drawer ul {

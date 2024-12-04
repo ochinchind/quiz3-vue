@@ -179,11 +179,11 @@
                     <div v-if="userId == authUserId"> My Profile</div>
                     <div v-else>Profile</div>
                 </div>
-                <div style="display: flex; ">
-                    <div style="width: 23%">
+                <div class="profile-content">
+                    <div>
                         <img width="100px" height="200px" src="/static/img/avatar.png">
                     </div>
-                    <div v-show="userId != authUserId" style="width: 43%">
+                    <div v-show="userId != authUserId">
                         <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
                         <div style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;">Age: {{ stateUser.age }}</div>
                         <div style="font-size: 2rem; margin-top: 2rem;">{{ stateUser.location }}</div>
@@ -197,7 +197,7 @@
                             ★★★★★
                         </span></div>
                     </div>
-                    <div v-show="userId == authUserId" style="width: 43%">
+                    <div v-show="userId == authUserId">
                         <div style=" color: #294BFF; font-size: 2rem;">{{ stateUser.username }}</div>
                         <UFormGroup  style="font-size: 2rem; color: #FCFF62; display: flex;margin-top: 2rem;" name="age">
                             <span>Age:</span> <UInput style="background: #45D2FF; color: black; font-size: 2rem;" v-model.number="stateUser.age"  type="number" placeholder="Enter age" />
@@ -208,7 +208,7 @@
                             ★★★★★
                         </span></div>
                     </div>
-                    <div style="width: 33%; justify-content: center; text-align: center">
+                    <div style="justify-content: center; text-align: center">
                         <div v-if="userId == authUserId">
                             <div style=" font-size: 2rem;margin-top: 2rem;">
                                 <a :href="`/statistic/${userId}`"  style="background: #6BEBFC;
@@ -1028,6 +1028,7 @@ export default {
     width: 300px;
     height: 100vh;
     text-align: center;
+    overflow: scroll;
 }
 
 .drawer ul {
@@ -1191,5 +1192,19 @@ h2 {
     display: none!important;
   }
 }
+
+@media (min-width: 1280px) {
+    .profile-content {
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 1280px) {
+    .profile-content {
+        display: block;
+    }
+}
+
 </style>
     

@@ -94,43 +94,81 @@
             </div>
           </div>
         </div>
-        <header style="background: #FFFFFFBD;  padding: 1rem;">
-            <div class="header" style="display:flex; justify-content: space-between;">
-                <button @click="toggleModal" class="" style="border:none; background: none; cursor: pointer;">
-                    <img src="/static/burger.png" style="width: 50px; height:50px;">
-                </button>
-                <div class="" style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);padding: 1rem 16rem; border-radius: 5%;">
-                    <div class="" style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
-                -webkit-background-clip: text;
-                color: transparent; font-weight: 700; font-size: larger;">
-                        New trips on Fall season! Full details on our Instagram accounts.
-                    </div>
-                </div>
-                <div v-if="!isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
-                    <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
-                    <img src="/static/img/avatar.png" style="width: 30px; height:30px;">
-                    </div>
-    
-                    <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
-                    <li @click="toggleLoginModal">Login</li>
-                    <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
-                    </ul>
-                </div>
-    
-                <div v-if="isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
-                    <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
-                    <img src="/static/img/avatar.png" style="width: 30px; height:30px;">
-                    </div>
-    
-                    <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
-                    <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" :to="`/profile/${authUserId}`">My profile </NuxtLink></li>
-                    <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/favorites">Favorites </NuxtLink></li>
-                    <li @click="logout">Logout</li>
-                    </ul>
+        
+    <header class="header-wrapper" style="background: #FFFFFFBD; padding: 1rem;">
+        <div class="header" style="display:flex; justify-content: space-between;">
+            <button @click="toggleModal" class="" style="border:none; background: none; cursor: pointer;">
+                <img src="/static/burger.png" style="width: 50px; height:50px;">
+            </button>
+            <div class="" style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);padding: 1rem 16rem; border-radius: 5%;">
+                <div class="" style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
+            -webkit-background-clip: text;
+            color: transparent; font-weight: 700; font-size: larger;">
+                    New trips on Fall season! Full details on our Instagram accounts.
                 </div>
             </div>
-        </header>
-    
+            <div v-if="!isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li @click="toggleLoginModal">Login</li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
+              </ul>
+            </div>
+
+            <div v-if="isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" :to="`/profile/${authUserId}`">My profile </NuxtLink></li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/favorites">Favorites </NuxtLink></li>
+                <li @click="logout">Logout</li>
+              </ul>
+            </div>
+        </div>
+    </header>
+
+    <header class="mob-header-wrapper">
+      <div 
+          class="" 
+          style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%); padding:1rem; border-radius: 5%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+          <div 
+              class="" 
+              style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
+          -webkit-background-clip: text;
+          color: transparent; font-weight: 700; font-size: larger;">
+              New trips on Fall season! Full details on our Instagram accounts.
+          </div>
+      </div>
+      <div v-if="!isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px;     max-width: fit-content;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li @click="toggleLoginModal">Login</li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
+              </ul>
+            </div>
+
+            <div v-if="isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px; max-width: fit-content;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" :to="`/profile/${authUserId}`">My profile </NuxtLink></li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/favorites">Favorites </NuxtLink></li>
+                <li @click="logout">Logout</li>
+              </ul>
+            </div>
+      
+    </header>
+
     
     
         <div style="padding: 2rem;">
@@ -184,6 +222,21 @@
         </div>
     
     </div>
+
+
+<div class="mob-footer-sticky" style="position: sticky; bottom: 0; background: linear-gradient(90deg, #A7D759 0%, #84963C 100%); height: 50px;">
+    <div style="display:flex; text-align: center; justify-content: center; ">
+      <a v-if="isAuth" :href="`/friends/${authUserId}`" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" style="width:40px; height: 40px;" alt="home" />
+      </a>
+      <div @click="toggleModal" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/3502/3502685.png" style="width:40px; height: 40px;" alt="plus" />
+      </div>
+      <a v-if="isAuth" href="/favorites" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/126/126471.png" style="width:40px; height: 40px;" alt="user" />
+      </a>
+    </div>
+  </div>
     </template>
     <script setup lang="ts">
     import { object, string, number, type InferType } from 'yup'
@@ -829,6 +882,7 @@ h1 {
         width: 300px;
         height: 100vh;
         text-align: center;
+        overflow: scroll;
     }
     
     .drawer ul {
@@ -968,5 +1022,50 @@ h1 {
         font-size: 60px;
         color: white;
     }
+
+
+.header-wrapper {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .header-wrapper {
+    display: block;
+  }
+}
+
+@media (max-width: 1280px) {
+  .wrapper-main {
+    display: none!important;
+  }
+}
+
+.mob-header-wrapper {
+  display:flex;
+  background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);
+}
+
+@media (min-width: 1280px) {
+  .mob-header-wrapper {
+    display: none!important;
+  }
+}
+
+.mob-wrapper-main {
+  display: flex;
+}
+
+@media (min-width: 1280px) {
+  .mob-wrapper-main {
+    display: none!important;
+  }
+}
+
+
+@media (min-width: 1280px) {
+  .mob-footer-sticky {
+    display: none!important;
+  }
+}
     </style>
         

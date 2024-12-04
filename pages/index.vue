@@ -2,21 +2,21 @@
 <template>
   <div class="index-page">
     <div v-if="isModalOpen" class="drawer" @click.self="closeModal">
-    <div class="drawer-content" style="background: #C1EBF1;">
-        <div @click="closeModal" style="background: #FFFFFF; color: black; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;">Menu</div>
+    <div class="drawer-content" style="">
+        <div @click="closeModal" class="drawer-menu" style="">Menu</div>
         <ul style="background: #FFFFFF; padding: 1rem 0rem; border-radius: 12px; margin-top: 1rem;">
-        <li v-for="topic in topics" :key="topic" @click="filterByTopic(topic)" style="background: linear-gradient(90deg, #4CD87C 0%, #42D669 63.42%, #3DD55E 100%); padding: 1rem; color: white; font-size: 2rem; ">
+        <li v-for="topic in topics" :key="topic" @click="filterByTopic(topic)" class="drawer-li" style="">
             {{ topic }}
         </li>
         </ul>
-        <div style="margin-top: 3rem; background: linear-gradient(180deg, #AFF090 0%, #45C330 100%); padding: 1rem; color: white;font-size: 1.5rem; text-align: left">
-            <div style="margin-bottom: 1rem; text-align: center;">
+        <div style="" class="drawer-all-list">
+            <div class="drawer-all-list-contact" style="">
                 CONTACTS
             </div>
-            <div style="margin-bottom: 1rem;">PHONE: +1(234)-23-45-22</div>
-            <div style="margin-bottom: 1rem;">ADDRESS: Green st., Yalow 
+            <div style="" class="drawer-all-list-div">PHONE: +1(234)-23-45-22</div>
+            <div style="" class="drawer-all-list-div">ADDRESS: Green st., Yalow 
                 park</div>
-            <div style="margin-bottom: 1rem;">EMAIL: Yallow@park.info</div>
+            <div style="" class="drawer-all-list-div">EMAIL: Yallow@park.info</div>
         </div>
     </div>
     </div>
@@ -24,26 +24,20 @@
     <div v-show="showLoginModal" class="modal" @click.self="closeLoginModal">
       <div class="modal-content">
         <span class="close" @click="closeLoginModal">&times;</span>
-        <h2 style="text-align: center;
-    color: white;
-    padding: 20px;
-    background: #75C2FA;
-    margin: 0;">Login</h2>
-        <div class="modal-body" style=" text-align: center;   padding: 20px;
-    margin-top: 3rem;
-    margin-bottom: 3rem;">
+        <h2 style="" class="modal-login">Login</h2>
+        <div class="modal-body" style="">
           <UForm @submit="LoginSubmit" :schema="schemaLogin" :state="stateLogin" >
             <UFormGroup  name="username">
-                <UInput style="background: white; color: black; font-size: 2rem;" v-model="stateLogin.username" type="text" placeholder="Enter username" />
+                <UInput style="" class="modal-input" v-model="stateLogin.username" type="text" placeholder="Enter username" />
             </UFormGroup>
             <UFormGroup  name="password">
-                <UInput style="background: white; color: black; font-size: 2rem;margin-top: 2rem;" v-model="stateLogin.password" type="password" placeholder="Enter password" />
+                <UInput class="modal-input" v-model="stateLogin.password" type="password" placeholder="Enter password" />
             </UFormGroup>
-            <div style="margin-top: 2rem;">
-              <button @click="toggleForgetPasswordModal" type="button" style="background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;">FORGOT PASSWORD?</button>
+            <div style="" class="mt-2">
+              <button @click="toggleForgetPasswordModal" type="button" style="" class="modal-forgot-btn">FORGOT PASSWORD?</button>
             </div>
-            <div style="margin-top: 2rem;">
-                <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem;">
+            <div class="mt-2">
+                <UButton type="submit" style="" class="modal-btn-auth">
                     AUTHORIZE
                 </UButton>
             </div>
@@ -55,47 +49,44 @@
     <div v-show="showForgetPasswordModal"  class="modal" style="z-index: 9999999;" @click.self="closeForgetPasswordModal">
       <div style="background: linear-gradient(180deg, #62F0E8 0%, #50BEB7 60%, #2F8781 100%);max-width: 1000px; " class="modal-content">
         <span class="close" @click="closeForgetPasswordModal">&times;</span>
-        <div class="modal-body" style="  align-items: center; text-align: center; justify-content: center;  padding: 20px;
-    margin-top: 3rem;
-    margin-bottom: 3rem;">
-            <div style=" display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; ">
-                <div style="background: white; padding: 2rem; width: 400px;">
+        <div class="modal-body" style="">
+            <div class="modal-heading" style=" ">
+                <div class="modal-heading-title" style="">
                 To get access to your account do next steps
               </div>
             </div>
 
-            <div style="display: flex; margin-top: 2rem;">
-              <div style="width: 50%; color: white; font-size: 1.5rem;">Write your email</div>
-              <div style="width: 50%; font-size: 1.5rem;">
+            <div style="" class="modal-content-wrapper">
+              <div class="modal-content-wrapper-text">Write your email</div>
+              <div class="modal-content-wrapper-text-text">
                 <input type="text" name="email" id="emailForgetInput">
               </div>
             </div>
 
-          <div style="display: flex; margin-top: 2rem;">
-            <div style="width: 50%; color: white; font-size: 1.5rem;">Send code to email</div>
-            <div style="width: 50%; font-size: 1.5rem;"><button @click="sendForgetPasswordToEmail" :disabled="isLoadingForgetPassword" style="background: #D6E343; color: black; padding: 1rem;
+          <div class="modal-content-wrapper">
+            <div style="">Send code to email</div>
+            <div class="modal-content-wrapper-text-text"><button @click="sendForgetPasswordToEmail" :disabled="isLoadingForgetPassword" style="background: #D6E343; color: black; padding: 1rem;
 ">{{ isLoadingForgetPassword ? 'Loading...' : 'Send' }}</button></div>
           </div>
 
-          <div style="display: flex; margin-top: 2rem;">
-            <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE SECRET PHRASE</div>
-            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="secretPhraseForgetPasswordInput" name="secret_phrase" type="password" placeholder="******" style="background: #44B3D6; color: white;
+          <div class="modal-content-wrapper">
+            <div class="modal-content-wrapper-text">ENTER THE SECRET PHRASE</div>
+            <div class="modal-content-wrapper-text-text"><input ref="secretPhraseInput" id="secretPhraseForgetPasswordInput" name="secret_phrase" type="password" placeholder="******" style="background: #44B3D6; color: white;
 "></div>
 </div>
-          <div style="display: flex; margin-top: 2rem;">
-            <div style="width: 50%; color: white; font-size: 1.5rem;">ENTER THE NEW PASSWORD</div>
-            <div style="width: 50%; font-size: 1.5rem;"><input ref="secretPhraseInput" id="newPasswordInputForget" name="password" type="password" placeholder="******" style="background: #44B3D6; color: white;
+          <div class="modal-content-wrapper">
+            <div class="modal-content-wrapper-text">ENTER THE NEW PASSWORD</div>
+            <div class="modal-content-wrapper-text-text"><input ref="secretPhraseInput" id="newPasswordInputForget" name="password" type="password" placeholder="******" style="background: #44B3D6; color: white;
 "></div>
           </div>
-          <div style="display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; margin-top: 2rem;">
-                <button @click="changePasswordForget" :disabled="isLoadingForgetChangePassword" style="background: #44B3D6; padding: 1rem; color:white;
-">{{ isLoadingForgetChangePassword ? 'Loading...' : 'Change password' }}</button>
+          <div class="modal-content-btn-wrapper">
+                <button @click="changePasswordForget" :disabled="isLoadingForgetChangePassword" class="modal-content-btn-wrapper-btn">{{ isLoadingForgetChangePassword ? 'Loading...' : 'Change password' }}</button>
             </div>
         </div>
       </div>
     </div>
 
-    <header style="background: #FFFFFFBD; padding: 1rem;">
+    <header class="header-wrapper" style="background: #FFFFFFBD; padding: 1rem;">
         <div class="header" style="display:flex; justify-content: space-between;">
             <button @click="toggleModal" class="" style="border:none; background: none; cursor: pointer;">
                 <img src="/static/burger.png" style="width: 50px; height:50px;">
@@ -132,9 +123,45 @@
         </div>
     </header>
 
+    <header class="mob-header-wrapper">
+      <div 
+          class="" 
+          style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%); padding:1rem; border-radius: 5%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+          <div 
+              class="" 
+              style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
+          -webkit-background-clip: text;
+          color: transparent; font-weight: 700; font-size: larger;">
+              New trips on Fall season! Full details on our Instagram accounts.
+          </div>
+      </div>
+      <div v-if="!isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px;     max-width: fit-content;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li @click="toggleLoginModal">Login</li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
+              </ul>
+            </div>
+
+            <div v-if="isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px; max-width: fit-content;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" :to="`/profile/${authUserId}`">My profile </NuxtLink></li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/favorites">Favorites </NuxtLink></li>
+                <li @click="logout">Logout</li>
+              </ul>
+            </div>
+      
+    </header>
 
 
-    <div style="display: flex; flex: center; justify-content: center;">
+    <div class="wrapper-main" style="display: flex; flex: center; justify-content: center;">
         <div class="hexagon-div">
             <!-- Header Section -->
 
@@ -205,7 +232,97 @@
             </div>
         </div>
     </div>
+
+
+  <div class="mob-wrapper-main" style="display: flex; flex: center; justify-content: center;">
+        <div class="mob-hexagon-div">
+            <!-- Header Section -->
+
+            <div class="header" style="text-align: left; margin-top: 10rem;">
+                <div class="date">
+                    <div class="border-blue" style="box-shadow: 0px 0px 15px #5BB9CD;" >
+                        13.09.2024
+                    </div>
+                </div>
+                <div style="display:block; margin-top:1rem;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <div class="border-blue" style=" font-size: 2.5rem;">
+                        {{ selectedTopic }}
+                    </div>
+                    <div class="filter" @click="toggleDropdown"  ref="dropdown" style="position:relative; margin-top: 1rem; margin-bottom: 1rem;">
+                      <div class="dropdown-toggle" :class="{ open: isOpen }">
+                        <img width="20" height="20" src="https://img.icons8.com/ios-filled/50/filter--v1.png" alt="filter--v1" />
+                        <span style="margin-left: 1rem;">{{ selectedLabel }}</span> &#9660;
+                      </div>
+
+                      <ul v-if="isOpen" class="dropdown-menu">
+                        <li @click="selectFilter('rating')">Rating</li>
+                        <li @click="selectFilter('pubDate')">Publication Date</li>
+                      </ul>
+                    </div>
+                  </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <button @click="previousPage" :disabled="currentPage === 1" style="color: white; cursor: pointer; border: none; background: none;">
+                    <img style="  transform: rotate(180deg);
+      transition: transform 0.5s ease;" width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/arrow-pointing-left.png" alt="back-arrow" />
+                    <div>
+                        {{ currentPage }} / {{ totalPages }}
+                    </div>
+                </button>
+                  <button @click="nextPage" :disabled="currentPage >= totalPages" style="color: white; cursor: pointer; border: none; background: none;">
+                      <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/arrow.png" alt="arrow"/>
+                      <div>
+                          {{ currentPage }} / {{ totalPages }}
+                      </div>
+                  </button>
+                </div>
+                </div>
+            </div>
+
+            <div>
+                <div  v-for="person in paginatedPersons" :key="person.id"  class="review-card">
+                    <div class="review-details">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="background: #FFFFF526; padding: 0.5rem; text-align: start;">
+                                <p><strong>{{ person.PersonName }}</strong> </p>
+                                <p>{{ formatDateTime(new Date(person.PubDate)) }}</p>
+                            </div>
+                            <div>
+                                <p><strong>Rating</strong> </p>
+                                <p class="rating">
+                                  <span class="stars" :style="getStarStyle(person.Rating)">
+  ★★★★★
+</span>
+                                </p>
+                            </div>
+                            <img :src="person.Avatar" :alt="person.PersonName" width="50" height="50">
+                        </div>
+                        <p style="word-break: break-all;">{{ person.Commentary }}</p>
+                        <div style="display: flex; justify-content: end;">
+                        <button class="like-button" @click="incrementStars(person)">LIKE</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
   </div>
+
+  <div class="mob-footer-sticky" style="position: sticky; bottom: 0; background: linear-gradient(90deg, #A7D759 0%, #84963C 100%); height: 50px;">
+    <div style="display:flex; text-align: center; justify-content: center; ">
+      <a v-if="isAuth" :href="`/friends/${authUserId}`" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" style="width:40px; height: 40px;" alt="home" />
+      </a>
+      <div @click="toggleModal" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/3502/3502685.png" style="width:40px; height: 40px;" alt="plus" />
+      </div>
+      <a v-if="isAuth" href="/favorites" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/126/126471.png" style="width:40px; height: 40px;" alt="user" />
+      </a>
+    </div>
+  </div>
+
 </template>
 <script setup lang="ts">
 import { object, string, type InferType } from 'yup'
@@ -330,7 +447,14 @@ export default {
     this.filteredPersons = this.persons.filter(person => person.Topic === 'IT');
     document.addEventListener('click', this.handleClickOutside);
 
+    const topicParameter = this.$route.query.topic;
 
+    this.selectFilter('rating');
+    if (topicParameter && this.topics.includes(topicParameter)) {
+      this.filterByTopic(topicParameter);
+    } else {
+      this.filterByTopic(this.selectedTopic);
+    }
     var isAuthValue = localStorage.getItem('isAuth');
     var authJwtTokenValue = localStorage.getItem('jwtToken');
     authUserIdChange(isAuthValue ?? '');
@@ -376,10 +500,10 @@ export default {
     },
     filterByRatingOrDate() {
       if (this.selectedFilter == 'pubDate') {
-        this.filteredPersons = _.orderBy(this.persons, ['PubDate'], ['desc']);
+        this.filteredPersons = _.orderBy(this.filteredPersons, ['PubDate'], ['desc']);
         
       } else {
-        this.filteredPersons = _.orderBy(this.persons, ['Rating'], ['desc']);
+        this.filteredPersons = _.orderBy(this.filteredPersons, ['Rating'], ['desc']);
       }
 
     },
@@ -499,6 +623,12 @@ export default {
   background-color: rgba(0,0,0,0.4);
 }
 
+.modal-body {
+  align-items: center; text-align: center; justify-content: center;  padding: 20px;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
+
 .modal-content {
   background-color: #fff;
   margin: 15% auto;
@@ -595,7 +725,7 @@ export default {
 .review-card {
     background: #5BB9CD;
     border-radius: 10px;
-    width: 45%;
+
     margin: 10px 0;
     padding: 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -603,6 +733,18 @@ export default {
     align-items: center;
     color: white;
 }
+@media (max-width: 1280px) {
+  .review-card {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .review-card {
+    width: 45%;
+  }
+}
+
 .review-card img {
     border-radius: 50%;
     margin-right: 20px;
@@ -647,6 +789,19 @@ export default {
     padding: 20px;
 }
 
+.mob-hexagon-div {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        180deg, 
+        rgba(254, 254, 254, 0.8) 0%, 
+        rgba(206, 210, 210, 0.8) 40%, 
+        rgba(193, 197, 197, 0.8) 62%, 
+        rgba(184, 187, 187, 0.8) 100%
+    );
+    padding: 20px;
+}
+
 .border-blue {
     background: #5BB9CD; color: white; padding: 0rem 1rem; width: 200px; border-radius: 8px;
 }
@@ -668,6 +823,16 @@ export default {
   width: 300px;
   height: 100vh;
   text-align: center;
+  background: #C1EBF1;
+  overflow: scroll;
+}
+
+.drawer-menu {
+  background: #FFFFFF; color: black; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;
+}
+
+.drawer-li {
+  background: linear-gradient(90deg, #4CD87C 0%, #42D669 63.42%, #3DD55E 100%); padding: 1rem; color: white; font-size: 2rem; 
 }
 
 .drawer ul {
@@ -683,5 +848,113 @@ export default {
 
 .drawer ul li:hover {
   text-decoration: underline;
+}
+
+.drawer-all-list {
+  margin-top: 3rem; background: linear-gradient(180deg, #AFF090 0%, #45C330 100%); padding: 1rem; color: white;font-size: 1.5rem; text-align: left
+}
+
+.drawer-all-list-contact {
+  margin-bottom: 1rem; text-align: center;
+}
+
+.drawer-all-list-div {
+  margin-bottom: 1rem;
+}
+
+.modal-login {
+  text-align: center;
+  color: white;
+  padding: 20px;
+  background: #75C2FA;
+  margin: 0;
+}
+
+.modal-input {
+  background: white; color: black; font-size: 2rem; margin-bottom: 1rem;
+}
+
+.mt-2 {
+  margin-top: 2rem;
+}
+
+.modal-forgot-btn {
+  background: white; font-size: 1rem; color: black; border: 1px black solid; padding: 1.5rem;
+}
+
+.modal-btn-auth {
+  background: lime; padding: 2rem; border-radius: 2rem;
+}
+
+.modal-heading {
+  display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center;
+}
+
+.modal-heading-title {
+  background: white; padding: 2rem; width: 400px;
+}
+
+.modal-content-wrapper {
+  display: flex; margin-top: 2rem;
+}
+
+.modal-content-wrapper-text {
+  width: 50%; color: white; font-size: 1.5rem;
+}
+
+.modal-content-wrapper-text-text {
+  width: 50%; font-size: 1.5rem;
+}
+
+.modal-content-btn-wrapper {
+  display: flex;     flex-direction: column; align-items: center; text-align: center; justify-content: center; margin-top: 2rem;
+}
+
+.modal-content-btn-wrapper-btn {
+  background: #44B3D6; padding: 1rem; color:white;
+}
+
+.header-wrapper {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .header-wrapper {
+    display: block;
+  }
+}
+
+@media (max-width: 1280px) {
+  .wrapper-main {
+    display: none!important;
+  }
+}
+
+.mob-header-wrapper {
+  display:flex;
+  background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);
+}
+
+@media (min-width: 1280px) {
+  .mob-header-wrapper {
+    display: none!important;
+  }
+}
+
+.mob-wrapper-main {
+  display: flex;
+}
+
+@media (min-width: 1280px) {
+  .mob-wrapper-main {
+    display: none!important;
+  }
+}
+
+
+@media (min-width: 1280px) {
+  .mob-footer-sticky {
+    display: none!important;
+  }
 }
 </style>

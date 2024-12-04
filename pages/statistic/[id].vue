@@ -1,7 +1,26 @@
 
 <template>
     <div class="register-page">
-        
+        <div v-if="isModalOpen" class="drawer" @click.self="closeModal">
+        <div class="drawer-content" style="background: #C1EBF1;">
+            <div @click="closeModal" style="background: #FFFFFF; color: black; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;">Menu</div>
+            <ul style="background: #FFFFFF; padding: 1rem 0rem; border-radius: 12px; margin-top: 1rem;">
+            <li v-for="topic in topics" :key="topic" @click="filterByTopic(topic)" style="background: linear-gradient(90deg, #4CD87C 0%, #42D669 63.42%, #3DD55E 100%); padding: 1rem; color: white; font-size: 2rem; ">
+                {{ topic }}
+            </li>
+            </ul>
+            <div style="margin-top: 3rem; background: linear-gradient(180deg, #AFF090 0%, #45C330 100%); padding: 1rem; color: white;font-size: 1.5rem; text-align: left">
+                <div style="margin-bottom: 1rem; text-align: center;">
+                    CONTACTS
+                </div>
+                <div style="margin-bottom: 1rem;">PHONE: +1(234)-23-45-22</div>
+                <div style="margin-bottom: 1rem;">ADDRESS: Green st., Yalow 
+                    park</div>
+                <div style="margin-bottom: 1rem;">EMAIL: Yallow@park.info</div>
+            </div>
+        </div>
+        </div>
+
         <div v-show="showLoginModal" class="modal" @click.self="closeLoginModal">
           <div class="modal-content">
             <span class="close" @click="closeLoginModal">&times;</span>
@@ -77,9 +96,9 @@
         </div>
         <header style="background: #FFFFFFBD;  padding: 1rem;">
             <div class="header" style="display:flex; justify-content: space-between;">
-                <NuxtLink to="/" class="" style="border:none; background: none; cursor: pointer;">
+                <button @click="toggleModal" class="" style="border:none; background: none; cursor: pointer;">
                     <img src="/static/burger.png" style="width: 50px; height:50px;">
-                </NuxtLink>
+                </button>
                 <div class="" style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);padding: 1rem 16rem; border-radius: 5%;">
                     <div class="" style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
                 -webkit-background-clip: text;
@@ -303,6 +322,14 @@
         const userId = route.params.id || "0";
         fetchStatistics(userId as string);
     });
+
+    function filterByTopic(topic: string) {
+        if (!topic) {
+            console.error('Topic is empty');
+            return;
+        }
+        window.location.href = `/?topic=${encodeURIComponent(topic)}`;
+    }
     </script>
     
     <script lang="ts">

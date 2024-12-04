@@ -1,6 +1,26 @@
 
 <template>
 <div class="register-page">
+  <div v-if="isModalOpen" class="drawer" @click.self="closeModal">
+    <div class="drawer-content" style="background: #C1EBF1;">
+        <div @click="closeModal" style="background: #FFFFFF; color: black; padding: 1rem; font-size: 2rem; border-radius: 10px; cursor: pointer;">Menu</div>
+        <ul style="background: #FFFFFF; padding: 1rem 0rem; border-radius: 12px; margin-top: 1rem;">
+        <li v-for="topic in topics" :key="topic" @click="filterByTopic(topic)" style="background: linear-gradient(90deg, #4CD87C 0%, #42D669 63.42%, #3DD55E 100%); padding: 1rem; color: white; font-size: 2rem; ">
+            {{ topic }}
+        </li>
+        </ul>
+        <div style="margin-top: 3rem; background: linear-gradient(180deg, #AFF090 0%, #45C330 100%); padding: 1rem; color: white;font-size: 1.5rem; text-align: left">
+            <div style="margin-bottom: 1rem; text-align: center;">
+                CONTACTS
+            </div>
+            <div style="margin-bottom: 1rem;">PHONE: +1(234)-23-45-22</div>
+            <div style="margin-bottom: 1rem;">ADDRESS: Green st., Yalow 
+                park</div>
+            <div style="margin-bottom: 1rem;">EMAIL: Yallow@park.info</div>
+        </div>
+    </div>
+    </div>
+
     <div v-show="showLoginModal" class="modal" @click.self="closeLoginModal">
       <div class="modal-content">
         <span class="close" @click="closeLoginModal">&times;</span>
@@ -108,11 +128,11 @@
       </div>
     </div>
 
-    <header style="background: #FFFFFFBD;  padding: 1rem;">
+    <header class="header-wrapper" style="background: #FFFFFFBD; padding: 1rem;">
         <div class="header" style="display:flex; justify-content: space-between;">
-            <NuxtLink to="/" class="" style="border:none; background: none; cursor: pointer;">
+            <button @click="toggleModal" class="" style="border:none; background: none; cursor: pointer;">
                 <img src="/static/burger.png" style="width: 50px; height:50px;">
-            </NuxtLink>
+            </button>
             <div class="" style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);padding: 1rem 16rem; border-radius: 5%;">
                 <div class="" style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
             -webkit-background-clip: text;
@@ -145,6 +165,42 @@
         </div>
     </header>
 
+    <header class="mob-header-wrapper">
+      <div 
+          class="" 
+          style="background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%); padding:1rem; border-radius: 5%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+          <div 
+              class="" 
+              style="background: linear-gradient(90deg, #FFADAD 0%, #FF774C 100%);
+          -webkit-background-clip: text;
+          color: transparent; font-weight: 700; font-size: larger;">
+              New trips on Fall season! Full details on our Instagram accounts.
+          </div>
+      </div>
+      <div v-if="!isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px;     max-width: fit-content;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li @click="toggleLoginModal">Login</li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/register">Register </NuxtLink></li>
+              </ul>
+            </div>
+
+            <div v-if="isAuth" @click="toggleDropdownAuth"  ref="dropdownAuth" style="position: relative; cursor: pointer; background: #7EEFFF; padding: 0.5rem 1rem; border-radius: 50%; border: none;">
+              <div class="dropdown-toggle" :class="{ open: isOpenAuth }" style="    background: none;">
+                <img src="/static/img/avatar.png" style="width: 30px; height:30px; max-width: fit-content;">
+              </div>
+
+              <ul v-if="isOpenAuth" class="dropdown-menu" style="width: 200px;left: -100px;">
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" :to="`/profile/${authUserId}`">My profile </NuxtLink></li>
+                <li style="padding: 0;"><NuxtLink style="width: 100%; height: 100%; padding: 1rem; display: block;" to="/favorites">Favorites </NuxtLink></li>
+                <li @click="logout">Logout</li>
+              </ul>
+            </div>
+      
+    </header>
 
 
     <div style="padding: 3rem;">
@@ -164,32 +220,44 @@
                         <UFormGroup style="  display: flex;
   flex-direction: column;
   margin-bottom: 1.5rem;" label="Email" name="email">
-                            <UInput style="background: #63E3EB; padding: 1.5rem; width: 900px; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.email" type="text" placeholder="Enter email" />
+                            <UInput style="background: #63E3EB; padding: 1.5rem; width: 100%; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.email" type="text" placeholder="Enter email" />
                         </UFormGroup>
                         <UFormGroup style="  display: flex;
   flex-direction: column;
   margin-bottom: 1.5rem;" label="Username" name="username">
-                            <UInput style="background: #63E3EB; padding: 1.5rem; width: 900px; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.username" type="text" placeholder="Enter username" />
+                            <UInput style="background: #63E3EB; padding: 1.5rem; width: 100%; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.username" type="text" placeholder="Enter username" />
                         </UFormGroup>
                         <UFormGroup style="  display: flex;
   flex-direction: column;
   margin-bottom: 1.5rem;" label="Password" name="password">
-                            <UInput style="background: #63E3EB; padding: 1.5rem; width: 900px; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.password" type="password" placeholder="Enter password" />
+                            <UInput style="background: #63E3EB; padding: 1.5rem; width: 100%; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.password" type="password" placeholder="Enter password" />
                         </UFormGroup>
-                        <div style="display: flex; justify-content: between; margin-top: 2rem;">
                             <UFormGroup label="Confirm password" name="confirmation_password">
-                                <UInput style="background: #63E3EB; padding: 1.5rem; width: 900px; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.confirmation_password" type="password" placeholder="Enter confirm password" />
+                                <UInput style="background: #63E3EB; padding: 1.5rem; width: 100%; color: white; font-size: 2rem; display: inline;" v-model="stateRegister.confirmation_password" type="password" placeholder="Enter confirm password" />
                             </UFormGroup>
-                                <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem; margin-left: auto;">
+
+                        <UButton type="submit" style="background: lime; padding: 2rem; border-radius: 2rem; margin-left: auto; margin-top: 1rem;">
                                     Create user
                                 </UButton>
-                        </div>
                     </div>
                 </UForm>
             </div>
             </div>
     </div>
 </div>
+<div class="mob-footer-sticky" style="position: sticky; bottom: 0; background: linear-gradient(90deg, #A7D759 0%, #84963C 100%); height: 50px;">
+    <div style="display:flex; text-align: center; justify-content: center; ">
+      <a v-if="isAuth" :href="`/friends/${authUserId}`" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" style="width:40px; height: 40px;" alt="home" />
+      </a>
+      <div @click="toggleModal" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/3502/3502685.png" style="width:40px; height: 40px;" alt="plus" />
+      </div>
+      <a v-if="isAuth" href="/favorites" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+        <img src="https://cdn-icons-png.flaticon.com/512/126/126471.png" style="width:40px; height: 40px;" alt="user" />
+      </a>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { object, string, ref, type InferType } from 'yup'
@@ -280,6 +348,13 @@ async function createUser(event: any) {
         }
     }
 
+    function filterByTopic(topic: string) {
+        if (!topic) {
+            console.error('Topic is empty');
+            return;
+        }
+        window.location.href = `/?topic=${encodeURIComponent(topic)}`;
+    }
 </script>
 
 <script lang="ts">
@@ -764,5 +839,35 @@ export default {
 
 .drawer ul li:hover {
   text-decoration: underline;
+}
+
+
+.mob-header-wrapper {
+  display:flex;
+  background: linear-gradient(90deg, #E5F67C 0%, #ECEF64 33%, #D2E037 66%, #EAEE3A 100%);
+}
+
+@media (min-width: 1280px) {
+  .mob-header-wrapper {
+    display: none!important;
+  }
+}
+
+
+.header-wrapper {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .header-wrapper {
+    display: block;
+  }
+}
+
+
+@media (min-width: 1280px) {
+  .mob-footer-sticky {
+    display: none!important;
+  }
 }
 </style>

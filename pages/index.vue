@@ -308,20 +308,55 @@
         </div>
     </div>
   </div>
-
-  <div class="mob-footer-sticky" style="position: sticky; bottom: 0; background: linear-gradient(90deg, #A7D759 0%, #84963C 100%); height: 50px;">
-    <div style="display:flex; text-align: center; justify-content: center; ">
-      <a v-if="isAuth" :href="`/friends/${authUserId}`" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
-        <img src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" style="width:40px; height: 40px;" alt="home" />
-      </a>
-      <div @click="toggleModal" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
-        <img src="https://cdn-icons-png.flaticon.com/512/3502/3502685.png" style="width:40px; height: 40px;" alt="plus" />
+  <div
+      :class="{'mob-footer-sticky': true, 'full-page': isFooterExpanded}" 
+      :style="{ bottom: isFooterExpanded ? 'auto' : '0', top: isFooterExpanded ? '50px' : 'auto' }">
+      <div style="display: flex; text-align: center; justify-content: center;">
+        <a 
+          v-if="isAuth" 
+          :href="`/friends/${authUserId}`" 
+          style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+          <img 
+            src="https://cdn-icons-png.flaticon.com/512/1380/1380338.png" 
+            style="width: 40px; height: 40px;" 
+            alt="home" />
+        </a>
+        <div 
+          @click="toggleFooter" 
+          style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+          <img 
+            :src="isFooterExpanded 
+              ? 'https://cdn-icons-png.flaticon.com/512/271/271210.png' 
+              : 'https://cdn-icons-png.flaticon.com/512/3502/3502685.png'" 
+            style="width: 40px; height: 40px;" 
+            alt="toggle" />
+        </div>
+        <a 
+          v-if="isAuth" 
+          href="/favorites" 
+          style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
+          <img 
+            src="https://cdn-icons-png.flaticon.com/512/126/126471.png" 
+            style="width: 40px; height: 40px;" 
+            alt="user" />
+        </a>
       </div>
-      <a v-if="isAuth" href="/favorites" style="display: flex; justify-content: center; align-items: center; width: 33.33%; cursor: pointer;">
-        <img src="https://cdn-icons-png.flaticon.com/512/126/126471.png" style="width:40px; height: 40px;" alt="user" />
-      </a>
+      <div 
+        v-if="isFooterExpanded" 
+        class="footer-content" 
+        style="height: calc(100vh - 50px); background: #8FAB44; display: flex; justify-content: center; align-items: center;">
+        <div 
+          style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 80%; margin: auto;">
+          <li 
+            v-for="topic in topics" 
+            :key="topic" 
+            @click="filterByTopic(topic)" 
+            style="background: #B0D17C; color: black; text-align: center; display: flex; justify-content: center; align-items: center; list-style: none; height: 100px; width: 100%; border: 1px solid #ccc; cursor: pointer;">
+            {{ topic }}
+          </li>
+        </div>
+      </div>
     </div>
-  </div>
 
 </template>
 <script setup lang="ts">
@@ -422,6 +457,7 @@ export default {
       sortByRating: true,
       isModalOpen: false,
       isOpenAuth: false,
+      isFooterExpanded: false,
       isOpen: false,
       selectedFilter: 'rating',
       options: {
@@ -569,6 +605,7 @@ export default {
       this.isModalOpen = false;
     },
     filterByTopic(topic: any) {
+      this.isFooterExpanded = false;
       this.filteredPersons = this.persons.filter(person => person.Topic === topic);
       this.selectedTopic = topic;
       this.currentPage = 1;
@@ -594,7 +631,10 @@ export default {
 
             this.filterByRatingOrDate();
       }
-    }
+    },
+    toggleFooter() {
+      this.isFooterExpanded = !this.isFooterExpanded;
+    },
   }
 }
 </script>
@@ -956,5 +996,18 @@ export default {
   .mob-footer-sticky {
     display: none!important;
   }
+}
+.mob-footer-sticky {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(90deg, #A7D759 0%, #84963C 100%);
+  transition: height 0.3s ease-in-out, top 0.3s ease-in-out, bottom 0.3s ease-in-out;
+  z-index: 1000; /* Ensures the footer stays above content */
+}
+
+.mob-footer-sticky.full-page {
+  height: calc(100vh - 50px); /* Full page minus top offset */
 }
 </style>
